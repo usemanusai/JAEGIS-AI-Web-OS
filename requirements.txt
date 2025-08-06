@@ -1,0 +1,60 @@
+# MCP Server Python Backend Dependencies
+# Core CLI framework
+click>=8.0.0
+
+# Document processing
+python-docx>=0.8.11
+PyPDF2>=3.0.0
+markdown>=3.4.0
+openpyxl>=3.1.0
+python-pptx>=0.6.21
+pymupdf>=1.23.0
+beautifulsoup4>=4.12.0
+html2text>=2020.1.16
+
+# AI/LLM integration
+openai>=1.0.0
+anthropic>=0.7.0
+
+# JSON and data processing
+jsonschema>=4.0.0
+
+# File and path utilities
+pathlib2>=2.3.0
+
+# Progress bars and CLI utilities
+tqdm>=4.64.0
+rich>=13.0.0
+
+# HTTP requests for API calls
+requests>=2.28.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Subprocess and system utilities
+psutil>=5.9.0
+
+# Text processing and chunking
+nltk>=3.8.0
+tiktoken>=0.5.0
+
+# Error handling and logging
+loguru>=0.7.0
+
+# Encoding detection
+chardet>=5.0.0
+
+# Template engine
+jinja2>=3.1.0
+
+# Configuration management
+pyyaml>=6.0.0
+
+# Enhanced AI providers
+anthropic>=0.3.0
+tenacity>=8.2.0
+
+# Additional dependencies for enhanced features
+clsx>=1.2.0
+twMerge>=1.0.0

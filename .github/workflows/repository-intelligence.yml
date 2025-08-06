@@ -1,0 +1,367 @@
+name: Repository Intelligence Monitoring
+
+on:
+  schedule:
+    # Run intelligence monitoring daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  code-quality-analysis:
+    name: Code Quality Intelligence
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install analysis tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install radon xenon mccabe flake8 bandit safety
+        pip install -r requirements.txt
+        
+    - name: Run code complexity analysis
+      run: |
+        # Cyclomatic complexity
+        radon cc mcp_server/ --json > complexity-report.json
+        
+        # Maintainability index
+        radon mi mcp_server/ --json > maintainability-report.json
+        
+        # Halstead metrics
+        radon hal mcp_server/ --json > halstead-report.json
+        
+        # Raw metrics (LOC, LLOC, etc.)
+        radon raw mcp_server/ --json > raw-metrics.json
+        
+    - name: Run code quality checks
+      run: |
+        # Flake8 style and quality
+        flake8 mcp_server/ --format=json --output-file=flake8-report.json || true
+        
+        # Security analysis
+        bandit -r mcp_server/ -f json -o security-analysis.json || true
+        
+        # Dependency vulnerabilities
+        safety check --json --output vulnerability-report.json || true
+        
+    - name: Generate intelligence insights
+      run: |
+        python << 'EOF'
+        import json
+        import os
+        from datetime import datetime
+        
+        # Load analysis results
+        def load_json_safe(filename):
+            try:
+                with open(filename, 'r') as f:
+                    return json.load(f)
+            except:
+                return {}
+        
+        complexity = load_json_safe('complexity-report.json')
+        maintainability = load_json_safe('maintainability-report.json')
+        security = load_json_safe('security-analysis.json')
+        vulnerabilities = load_json_safe('vulnerability-report.json')
+        
+        # Generate insights
+        insights = {
+            "timestamp": datetime.now().isoformat(),
+            "repository": "usemanusai/JAEGIS-AI-Web-OS",
+            "analysis": {
+                "code_quality": {
+                    "complexity_score": "Good" if len(complexity) > 0 else "Unknown",
+                    "maintainability": "High" if len(maintainability) > 0 else "Unknown",
+                    "security_issues": len(security.get('results', [])),
+                    "vulnerabilities": len(vulnerabilities) if isinstance(vulnerabilities, list) else 0
+                },
+                "recommendations": [],
+                "alerts": []
+            }
+        }
+        
+        # Add recommendations based on analysis
+        if insights["analysis"]["code_quality"]["security_issues"] > 0:
+            insights["analysis"]["alerts"].append("Security issues detected - review required")
+            insights["analysis"]["recommendations"].append("Address security findings in bandit report")
+        
+        if insights["analysis"]["code_quality"]["vulnerabilities"] > 0:
+            insights["analysis"]["alerts"].append("Dependency vulnerabilities found")
+            insights["analysis"]["recommendations"].append("Update vulnerable dependencies")
+        
+        # Save insights
+        with open('intelligence-insights.json', 'w') as f:
+            json.dump(insights, f, indent=2)
+        
+        print("Intelligence analysis complete")
+        EOF
+        
+    - name: Upload analysis reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: intelligence-reports-${{ github.sha }}
+        path: |
+          complexity-report.json
+          maintainability-report.json
+          security-analysis.json
+          vulnerability-report.json
+          intelligence-insights.json
+          
+    - name: Create intelligence summary
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const insights = JSON.parse(fs.readFileSync('intelligence-insights.json', 'utf8'));
+            
+            let summary = '## 🧠 Repository Intelligence Report\n\n';
+            summary += `**Analysis Date**: ${insights.timestamp}\n\n`;
+            
+            // Code Quality Summary
+            summary += '### 📊 Code Quality Metrics\n';
+            summary += `- **Complexity**: ${insights.analysis.code_quality.complexity_score}\n`;
+            summary += `- **Maintainability**: ${insights.analysis.code_quality.maintainability}\n`;
+            summary += `- **Security Issues**: ${insights.analysis.code_quality.security_issues}\n`;
+            summary += `- **Vulnerabilities**: ${insights.analysis.code_quality.vulnerabilities}\n\n`;
+            
+            // Alerts
+            if (insights.analysis.alerts.length > 0) {
+              summary += '### 🚨 Alerts\n';
+              insights.analysis.alerts.forEach(alert => {
+                summary += `- ⚠️ ${alert}\n`;
+              });
+              summary += '\n';
+            }
+            
+            // Recommendations
+            if (insights.analysis.recommendations.length > 0) {
+              summary += '### 💡 Recommendations\n';
+              insights.analysis.recommendations.forEach(rec => {
+                summary += `- 🔧 ${rec}\n`;
+              });
+              summary += '\n';
+            }
+            
+            summary += '📋 Detailed reports are available in the workflow artifacts.';
+            
+            // Create or update issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'intelligence-report',
+              state: 'open'
+            });
+            
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: summary
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🧠 Repository Intelligence Report',
+                body: summary,
+                labels: ['intelligence-report', 'monitoring']
+              });
+            }
+          } catch (error) {
+            console.log('Error processing intelligence insights:', error);
+          }
+
+  performance-monitoring:
+    name: Performance Intelligence
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install memory-profiler line-profiler
+        
+    - name: Run performance benchmarks
+      run: |
+        # Create performance test script
+        cat > performance_test.py << 'EOF'
+        import time
+        import psutil
+        import json
+        from memory_profiler import profile
+        from mcp_server.enhanced_ingestion import EnhancedDocumentProcessor
+        from mcp_server.enhanced_asm import EnhancedArchitecturalSynthesisModule
+        
+        def benchmark_document_processing():
+            """Benchmark document processing performance."""
+            processor = EnhancedDocumentProcessor()
+            
+            # Create test document
+            test_content = "# Test Document\n" + "This is test content. " * 1000
+            with open('test_doc.md', 'w') as f:
+                f.write(test_content)
+            
+            start_time = time.time()
+            start_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+            
+            try:
+                chunks = processor.process_file_enhanced('test_doc.md')
+                
+                end_time = time.time()
+                end_memory = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+                
+                return {
+                    "processing_time": end_time - start_time,
+                    "memory_usage": end_memory - start_memory,
+                    "chunks_generated": len(chunks),
+                    "throughput": len(chunks) / (end_time - start_time)
+                }
+            except Exception as e:
+                return {"error": str(e)}
+        
+        # Run benchmarks
+        results = {
+            "timestamp": time.time(),
+            "benchmarks": {
+                "document_processing": benchmark_document_processing()
+            },
+            "system_info": {
+                "cpu_count": psutil.cpu_count(),
+                "memory_total": psutil.virtual_memory().total / 1024 / 1024 / 1024,  # GB
+                "python_version": "3.9"
+            }
+        }
+        
+        with open('performance-results.json', 'w') as f:
+            json.dump(results, f, indent=2)
+        
+        print("Performance benchmarks complete")
+        EOF
+        
+        python performance_test.py
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results-${{ github.sha }}
+        path: performance-results.json
+
+  dependency-intelligence:
+    name: Dependency Intelligence
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install analysis tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pipdeptree pip-audit johnnydep
+        
+    - name: Analyze dependency tree
+      run: |
+        # Generate dependency tree
+        pipdeptree --json > dependency-tree.json
+        
+        # Check for dependency conflicts
+        pipdeptree --warn conflict > dependency-conflicts.txt || true
+        
+        # Audit dependencies for vulnerabilities
+        pip-audit --format=json --output=dependency-audit.json || true
+        
+    - name: Generate dependency insights
+      run: |
+        python << 'EOF'
+        import json
+        import subprocess
+        from datetime import datetime
+        
+        # Load dependency data
+        try:
+            with open('dependency-tree.json', 'r') as f:
+                dep_tree = json.load(f)
+        except:
+            dep_tree = []
+        
+        try:
+            with open('dependency-audit.json', 'r') as f:
+                audit_results = json.load(f)
+        except:
+            audit_results = {"vulnerabilities": []}
+        
+        # Analyze dependencies
+        total_deps = len(dep_tree)
+        vulnerable_deps = len(audit_results.get("vulnerabilities", []))
+        
+        insights = {
+            "timestamp": datetime.now().isoformat(),
+            "dependency_analysis": {
+                "total_dependencies": total_deps,
+                "vulnerable_dependencies": vulnerable_deps,
+                "security_score": max(0, 100 - (vulnerable_deps * 10)),
+                "recommendations": []
+            }
+        }
+        
+        if vulnerable_deps > 0:
+            insights["dependency_analysis"]["recommendations"].append(
+                f"Update {vulnerable_deps} vulnerable dependencies"
+            )
+        
+        if total_deps > 50:
+            insights["dependency_analysis"]["recommendations"].append(
+                "Consider dependency optimization - high dependency count"
+            )
+        
+        with open('dependency-insights.json', 'w') as f:
+            json.dump(insights, f, indent=2)
+        EOF
+        
+    - name: Upload dependency analysis
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-analysis-${{ github.sha }}
+        path: |
+          dependency-tree.json
+          dependency-audit.json
+          dependency-insights.json

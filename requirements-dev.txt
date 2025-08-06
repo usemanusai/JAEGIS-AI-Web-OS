@@ -1,0 +1,165 @@
+# Development and Testing Dependencies
+
+# Testing frameworks
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.2.0
+
+# Code quality and formatting
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+isort>=5.12.0
+pre-commit>=3.0.0
+
+# Security analysis
+bandit>=1.7.0
+safety>=2.3.0
+pip-audit>=2.6.0
+
+# Code complexity analysis
+radon>=6.0.0
+xenon>=0.9.0
+mccabe>=0.7.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.0.0
+mkdocstrings[python]>=0.22.0
+
+# Performance profiling
+memory-profiler>=0.61.0
+line-profiler>=4.0.0
+py-spy>=0.3.14
+
+# Build tools
+build>=0.10.0
+twine>=4.0.0
+wheel>=0.40.0
+setuptools>=68.0.0
+
+# Development utilities
+ipython>=8.0.0
+jupyter>=1.0.0
+notebook>=6.5.0
+
+# HTTP testing
+httpx>=0.24.0
+responses>=0.23.0
+requests-mock>=1.10.0
+
+# Linting and type checking
+pylint>=2.17.0
+pycodestyle>=2.10.0
+pydocstyle>=6.3.0
+autopep8>=2.0.0
+
+# Testing utilities
+factory-boy>=3.2.0
+faker>=18.0.0
+freezegun>=1.2.0
+mock>=5.0.0
+
+# Coverage reporting
+coverage[toml]>=7.0.0
+codecov>=2.1.0
+
+# Git hooks and automation
+gitpython>=3.1.0
+pre-commit-hooks>=4.4.0
+
+# Environment management
+python-dotenv>=1.0.0
+environs>=9.5.0
+
+# Debugging
+pdb++>=0.10.3
+ipdb>=0.13.0
+pudb>=2022.1.3
+
+# Performance monitoring
+psutil>=5.9.0
+pympler>=0.9.0
+
+# API testing
+tavern>=2.0.0
+schemathesis>=3.19.0
+
+# Load testing
+locust>=2.15.0
+
+# Static analysis
+vulture>=2.7.0
+dead>=1.5.0
+
+# Documentation testing
+doctest>=1.0.0
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+
+# Dependency analysis
+pipdeptree>=2.9.0
+johnnydep>=1.20.0
+pip-tools>=6.13.0
+
+# Code formatting
+yapf>=0.32.0
+blue>=0.9.0
+
+# Import sorting
+reorder-python-imports>=3.9.0
+
+# Type checking
+pyre-check>=0.9.0
+pyright>=1.1.0
+
+# Security scanning
+semgrep>=1.31.0
+dlint>=0.14.0
+
+# License checking
+licensecheck>=2023.1.0
+pip-licenses>=4.3.0
+
+# Notebook testing
+nbval>=0.10.0
+papermill>=2.4.0
+
+# API documentation
+sphinx-autodoc-typehints>=1.23.0
+sphinx-click>=4.4.0
+
+# Development server
+watchdog>=3.0.0
+livereload>=2.6.0
+
+# Database testing (if needed)
+pytest-postgresql>=5.0.0
+pytest-mongodb>=2.4.0
+
+# Async testing
+pytest-trio>=0.8.0
+pytest-tornado>=0.8.0
+
+# Mocking and fixtures
+pytest-factoryboy>=2.5.0
+pytest-fixtures>=0.1.0
+
+# Parallel testing
+pytest-parallel>=0.1.1
+pytest-forked>=1.6.0
+
+# Reporting
+pytest-html>=3.1.0
+pytest-json-report>=1.5.0
+allure-pytest>=2.13.0
+
+# Benchmarking
+pytest-benchmark>=4.0.0
+asv>=0.5.0
+
+# Configuration testing
+pytest-env>=0.8.0
+pytest-dotenv>=0.5.0

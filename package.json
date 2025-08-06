@@ -1,0 +1,96 @@
+{
+  "name": "jaegis-ai-web-os",
+  "version": "1.0.0",
+  "description": "Universal AI-powered application foundry that transforms architectural documentation into complete, production-ready applications",
+  "main": "cli.js",
+  "bin": {
+    "jaegis-ai-web-os": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "mcp_server/",
+    "requirements.txt",
+    "README.md",
+    "LICENSE",
+    "docs/",
+    "examples/"
+  ],
+  "scripts": {
+    "test": "npm run test:cli && npm run test:integration",
+    "test:cli": "node test/test-cli.js",
+    "test:integration": "node test/integration-test.js",
+    "test:coverage": "nyc npm test",
+    "lint": "eslint cli.js test/",
+    "lint:fix": "eslint cli.js test/ --fix",
+    "format": "prettier --write cli.js test/",
+    "build": "echo 'No build step required for CLI wrapper'",
+    "dev": "node cli.js",
+    "docs": "echo 'Documentation available in docs/ directory'",
+    "security-audit": "npm audit && echo 'Run: python -m safety check for Python deps'",
+    "prepare": "echo 'Setting up development environment...'",
+    "postinstall": "node -e \"console.log('\\n🚀 JAEGIS AI Web OS installed successfully!\\n\\nQuick start:\\n  npx jaegis-ai-web-os interactive\\n\\nDocumentation:\\n  https://github.com/usemanusai/JAEGIS-AI-Web-OS\\n')\""
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=7.0.0"
+  },
+  "keywords": [
+    "ai",
+    "artificial-intelligence",
+    "architecture",
+    "code-generation",
+    "documentation",
+    "automation",
+    "nextjs",
+    "react",
+    "python",
+    "django",
+    "fastapi",
+    "document-processing",
+    "ai-powered",
+    "application-generator",
+    "enterprise",
+    "production-ready",
+    "cli-tool",
+    "developer-tools",
+    "openai",
+    "anthropic",
+    "gpt-4",
+    "claude"
+  ],
+  "author": {
+    "name": "JAEGIS AI Team",
+    "email": "team@usemanusai.com",
+    "url": "https://usemanusai.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/usemanusai/JAEGIS-AI-Web-OS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/usemanusai/JAEGIS-AI-Web-OS/issues"
+  },
+  "homepage": "https://github.com/usemanusai/JAEGIS-AI-Web-OS#readme",
+  "preferGlobal": true,
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.1.1",
+    "nyc": "^15.1.0",
+    "mocha": "^10.2.0",
+    "chai": "^4.3.10"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/usemanusai"
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "project_name": "using",
+  "description": "Generated project",
+  "technology_stack": [
+    "node.js",
+    "next.js",
+    "tailwind",
+    "typescript",
+    "react",
+    "sqlite",
+    "prisma"
+  ],
+  "directory_structure": {},
+  "dependencies": [
+    "framer-motion",
+    "lucide-react",
+    "@types/node",
+    "zustand",
+    "@prisma/client",
+    "prisma"
+  ],
+  "build_instructions": [
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "framer-motion",
+      "content": null,
+      "dependencies": null,
+      "order": 0
+    },
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "lucide-react",
+      "content": null,
+      "dependencies": null,
+      "order": 1
+    },
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "@types/node",
+      "content": null,
+      "dependencies": null,
+      "order": 2
+    },
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "zustand",
+      "content": null,
+      "dependencies": null,
+      "order": 3
+    },
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "@prisma/client",
+      "content": null,
+      "dependencies": null,
+      "order": 4
+    },
+    {
+      "type": "dependency",
+      "action": "install",
+      "target": "prisma",
+      "content": null,
+      "dependencies": null,
+      "order": 5
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "Initialize Project",
+      "content": null,
+      "dependencies": null,
+      "order": 6
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npx create-next-app@latest my-app --typescript --tailwind --eslint --app",
+      "content": null,
+      "dependencies": null,
+      "order": 7
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "cd my-app",
+      "content": null,
+      "dependencies": null,
+      "order": 8
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "Install Dependencies",
+      "content": null,
+      "dependencies": null,
+      "order": 9
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npm install prisma @prisma/client",
+      "content": null,
+      "dependencies": null,
+      "order": 10
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npm install zustand framer-motion lucide-react",
+      "content": null,
+      "dependencies": null,
+      "order": 11
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npm install -D @types/node",
+      "content": null,
+      "dependencies": null,
+      "order": 12
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "Database Setup",
+      "content": null,
+      "dependencies": null,
+      "order": 13
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npx prisma init --datasource-provider sqlite",
+      "content": null,
+      "dependencies": null,
+      "order": 14
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npx prisma generate",
+      "content": null,
+      "dependencies": null,
+      "order": 15
+    },
+    {
+      "type": "command",
+      "action": "run",
+      "target": "npx prisma db push",
+      "content": null,
+      "dependencies": null,
+      "order": 16
+    }
+  ],
+  "environment_variables": {},
+  "post_build_commands": [],
+  "metadata": {
+    "generated_at": "C:\\Users\\Lenovo ThinkPad T480\\Desktop\\JAEGIS-OS-BUILDER",
+    "source_files": [
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md",
+      "sample_architecture.md"
+    ],
+    "total_chunks": 12
+  }
+}

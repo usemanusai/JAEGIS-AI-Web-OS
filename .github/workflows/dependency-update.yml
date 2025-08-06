@@ -1,0 +1,189 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Run dependency updates weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install tools
+      run: |
+        npm install -g npm-check-updates
+        python -m pip install --upgrade pip pip-tools
+        
+    - name: Update Node.js dependencies
+      run: |
+        # Check for updates
+        ncu --format group --target minor > npm-updates.txt || true
+        
+        # Update package.json
+        ncu -u --target minor
+        
+        # Install updated dependencies
+        npm install
+        
+        # Run tests to ensure compatibility
+        npm test || echo "Tests failed - manual review required"
+        
+    - name: Update Python dependencies
+      run: |
+        # Update requirements.txt with compatible versions
+        pip-compile --upgrade requirements.in || echo "requirements.in not found, skipping"
+        pip-compile --upgrade requirements-dev.in || echo "requirements-dev.in not found, skipping"
+        
+        # Install updated dependencies
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        
+        # Run tests to ensure compatibility
+        python -m pytest tests/ || echo "Tests failed - manual review required"
+        
+    - name: Check for security vulnerabilities
+      run: |
+        # Check npm vulnerabilities
+        npm audit --audit-level=moderate || echo "NPM vulnerabilities found"
+        
+        # Check Python vulnerabilities
+        pip install safety
+        safety check || echo "Python vulnerabilities found"
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: '🔄 Automated Dependency Updates'
+        body: |
+          ## 🔄 Automated Dependency Updates
+          
+          This PR contains automated dependency updates for both Node.js and Python packages.
+          
+          ### Changes Made
+          - Updated Node.js dependencies to latest minor versions
+          - Updated Python dependencies to latest compatible versions
+          - Ran security audits on updated dependencies
+          
+          ### Review Checklist
+          - [ ] All tests pass
+          - [ ] No new security vulnerabilities introduced
+          - [ ] Breaking changes reviewed and documented
+          - [ ] Version compatibility verified
+          
+          ### Security Audit Results
+          ```
+          $(cat npm-updates.txt 2>/dev/null || echo "No Node.js updates available")
+          ```
+          
+          **Note**: This PR was automatically generated. Please review all changes carefully before merging.
+          
+        branch: automated-dependency-updates
+        delete-branch: true
+        
+    - name: Upload update reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-updates-${{ github.run_number }}
+        path: |
+          npm-updates.txt
+          package.json
+          requirements.txt
+          requirements-dev.txt
+
+  security-updates:
+    name: Security Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Fix npm vulnerabilities
+      run: |
+        # Attempt to fix vulnerabilities automatically
+        npm audit fix --force || echo "Some vulnerabilities require manual intervention"
+        
+        # Generate audit report
+        npm audit --json > npm-security-report.json || true
+        
+    - name: Fix Python vulnerabilities
+      run: |
+        pip install safety
+        
+        # Check for vulnerabilities
+        safety check --json --output python-security-report.json || true
+        
+        # Attempt to update vulnerable packages
+        safety check --short-report | grep -o '^[^=]*' | xargs -I {} pip install --upgrade {} || echo "Some packages require manual updates"
+        
+    - name: Create Security Update PR
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'security: fix dependency vulnerabilities'
+        title: '🔒 Security: Fix Dependency Vulnerabilities'
+        body: |
+          ## 🔒 Security Update
+          
+          This PR contains automated security fixes for dependency vulnerabilities.
+          
+          ### Security Issues Addressed
+          - Automatically fixed npm audit issues
+          - Updated Python packages with known vulnerabilities
+          
+          ### ⚠️ Important
+          This is a **security update** and should be reviewed and merged promptly.
+          
+          ### Review Required
+          - [ ] Verify all security issues are resolved
+          - [ ] Ensure no breaking changes introduced
+          - [ ] Run full test suite
+          - [ ] Check for any remaining vulnerabilities
+          
+          **Priority**: High - Security fixes should be deployed quickly.
+          
+        branch: security-updates
+        delete-branch: true
+        labels: security,dependencies
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-updates-${{ github.run_number }}
+        path: |
+          npm-security-report.json
+          python-security-report.json

@@ -1,0 +1,2138 @@
+🚀 JAEGIS OS v2.2.0 - Unified AI Developer Implementation Prompt
+Objective: Implement the JAEGIS AI-Powered Web OS (v2.2.0) from scratch. This document provides the complete, step-by-step instructions, including all code, configurations, dependencies, and critical fixes. The final application must be fully functional, error-free, and production-ready.
+Project Start Date: 06 AUGUST 2025 (This should adapt automatically with each new day).
+Core Principles:
+No Mock Data or Placeholders: All code and configuration must be complete and directly usable.
+Error-Free Implementation: The final code must be free of linting, syntax, runtime, and module errors.
+Self-Contained: This document is the single source of truth. No external file access is required.
+Phase 1: Project Initialization & Setup
+This phase is foundational. It covers the initial setup of the Next.js 15 project, the installation of all necessary dependencies to build a modern, interactive web application, and the complete configuration of the database using Prisma ORM. Following these steps precisely is crucial for a stable and scalable system.
+Task 1.1: Initialize Next.js 15 Project
+Subtask 1.1.1: Create the Project
+Initialize a new Next.js 15 project. We will use TypeScript for type safety, Tailwind CSS for styling, and ESLint for code quality, all configured with the modern App Router.
+npx create-next-app@latest jaegis-os --typescript --tailwind --eslint --app
+cd jaegis-os
+
+
+Subtask 1.1.2: Install All Dependencies
+Install all required production and development dependencies. This curated list includes packages for state management (zustand), animations (framer-motion), UI components (shadcn/ui dependencies), security (bcryptjs, jsonwebtoken), and AI integration (z-ai-web-dev-sdk).
+npm install zustand framer-motion lucide-react @radix-ui/react-slot class-variance-authority clsx tailwind-merge socket.io socket.io-client bcryptjs jsonwebtoken z-ai-web-dev-sdk @prisma/client
+npm install -D @types/node @types/bcryptjs @types/jsonwebtoken prisma
+
+
+Subtask 1.1.3: Initialize Shadcn/UI
+Set up the shadcn/ui component library, which provides a set of reusable and accessible components that we will use to build the OS interface.
+npx shadcn-ui@latest init
+
+
+When prompted, accept the default configuration. Then, add the necessary components which will form the building blocks of our UI, from simple buttons to complex dialogs.
+npx shadcn-ui@latest add button card input label tabs alert dialog toast
+
+
+Task 1.2: Database Setup with Prisma
+Subtask 1.2.1: Initialize Prisma
+Initialize Prisma in the project. This will create the prisma directory containing the schema file and set up the project for database access using SQLite for simplicity in development.
+npx prisma init --datasource-provider sqlite
+
+
+Subtask 1.2.2: Define the Database Schema
+Replace the contents of prisma/schema.prisma with the complete schema below. This schema defines the core data models for our application: User for account information, Session for managing persistent logins with refresh tokens, and Application for defining the apps within the OS.
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db" // Specifies the local SQLite database file
+}
+
+// User model defines the structure for user accounts
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  password     String   // Hashed password
+  role         UserRole @default(USER)
+  permissions  Json     // Flexible JSON field for a permission system
+  isActive     Boolean  @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Establishes a one-to-many relationship with Session and Application models
+  sessions     Session[]
+  applications Application[]
+}
+
+// Session model tracks user login sessions for persistent authentication
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique // The secure refresh token
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Defines the many-to-one relationship back to the User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Application model defines the applications available within the OS
+model Application {
+  id          String           @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  category    ApplicationCategory
+  version     String
+  author      String
+  windowType  WindowType       // Defines the type of window to open
+  permissions Json
+  isSystemApp Boolean          @default(false)
+  config      Json             // Application-specific configuration
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  // Each application is associated with a user (e.g., creator)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+}
+
+// Enumerations for structured, predefined roles and categories
+enum UserRole {
+  ADMIN
+  USER
+  RESEARCHER
+}
+
+enum ApplicationCategory {
+  SYSTEM
+  UTILITY
+  PRODUCTIVITY
+  DEVELOPMENT
+  AI_SERVICE
+}
+
+enum WindowType {
+  FILE_EXPLORER
+  MONITORING
+  TERMINAL
+  SETTINGS
+  TASK_MANAGER
+  AGENT_MANAGER
+  SERVICE_MANAGER
+  CUSTOM
+}
+
+
+Subtask 1.2.3: Generate Prisma Client and Push Schema
+Generate the Prisma client based on the schema and apply (push) these definitions to the SQLite database, creating the necessary tables.
+npx prisma generate
+npx prisma db push
+
+
+Subtask 1.2.4: Create Database Seeder
+Create a script to seed the database with default admin and user accounts for immediate testing and development. Create prisma/seed.ts.
+// prisma/seed.ts
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('Start seeding database...');
+
+  // Hash passwords securely using bcrypt
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const userPassword = await bcrypt.hash('user123', 10);
+
+  // Create an Admin User with full permissions
+  await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {}, // Do nothing if user exists
+    create: {
+      username: 'admin',
+      email: 'admin@jaegis.os',
+      password: adminPassword,
+      role: 'ADMIN',
+      permissions: [
+        'system_access', 'agent_management', 'nlds_access', 
+        'data_processing', 'llm_access', 'ai_processing', 
+        'deployment_access', 'system_config', 'forge_access', 
+        'tool_management', 'file_system_access', 'command_execution', 
+        'system_monitoring', 'performance_data'
+      ],
+    },
+  });
+
+  // Create a Standard User with limited permissions
+  await prisma.user.upsert({
+    where: { username: 'user' },
+    update: {},
+    create: {
+      username: 'user',
+      email: 'user@jaegis.os',
+      password: userPassword,
+      role: 'USER',
+      permissions: ['system_access', 'file_system_access'],
+    },
+  });
+
+  console.log('Seeding finished successfully.');
+}
+
+main()
+  .catch((e) => {
+    console.error('An error occurred during seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+
+
+Subtask 1.2.5: Update package.json with Seed Command
+Add the seed script to your package.json for easy execution. This requires ts-node to run the TypeScript seed file directly.
+npm install -D ts-node
+```json
+// package.json
+{
+  // ... other properties
+  "prisma": {
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+  },
+  "scripts": {
+    // ... other scripts
+    "db:seed": "npx prisma db seed"
+  },
+  // ... other properties
+}
+
+
+Subtask 1.2.6: Run the Seed Script
+Execute the seed command to populate the database with the default users.
+npm run db:seed
+
+
+Task 1.3: Project Configuration
+Subtask 1.3.1: Configure next.config.mjs
+Replace the content of next.config.mjs with the optimized configuration below to enhance performance and manage build settings.
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  typescript: {
+    // Prevent build failures due to third-party type issues, useful in complex projects.
+    ignoreBuildErrors: true,
+  },
+  // Set to false to prevent components from rendering twice in development, which can be helpful for debugging.
+  reactStrictMode: false, 
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000'],
+    },
+    // Reduces bundle size by optimizing imports from these libraries.
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+  images: {
+    // Enables modern image formats for better performance.
+    formats: ['image/webp', 'image/avif'],
+  },
+  // Enables gzip compression for smaller asset sizes.
+  compress: true,
+  // Disables the "Powered by Next.js" header for security.
+  poweredByHeader: false,
+  eslint: {
+    // Speeds up production builds by skipping linting.
+    ignoreDuringBuilds: true,
+  },
+};
+
+export default nextConfig;
+
+
+Subtask 1.3.2: Configure Environment Variables
+Create a .env.local file in the root of your project for sensitive keys and environment-specific settings.
+# .env.local
+
+# Authentication secrets. Use strong, randomly generated strings in production.
+JWT_SECRET="JAEGIS-!s-a-s3cr3t-k3y-f0r-d3v"
+REFRESH_TOKEN_SECRET="JAEGIS-!s-a-s3cr3t-r3fr3sh-k3y-f0r-d3v"
+
+# AI Services (Replace with your actual key from the AI service provider)
+ZAI_API_KEY="your-zai-api-key-here"
+
+# Application settings
+NODE_ENV="development"
+PORT="3000"
+NEXT_PUBLIC_SOCKET_URL="http://localhost:3000"
+
+
+Phase 2: Core System Implementation
+This phase involves defining the core data structures for the entire application in a central location and setting up the global state management using Zustand, a lightweight and powerful state management library.
+Task 2.1: Create Core Type Definitions
+Create the file src/core/types.ts to house all shared TypeScript interfaces and types. This promotes consistency and reusability across the codebase.
+// src/core/types.ts
+
+// Defines the shape of a user object, used throughout the application.
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  permissions: Permission[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin?: Date;
+}
+
+// Defines the available user roles in the system.
+export type UserRole = 'ADMIN' | 'USER' | 'RESEARCHER';
+
+// Defines a comprehensive list of permissions for role-based access control.
+export type Permission = 
+  | 'system_access' | 'agent_management' | 'nlds_access' | 'data_processing'
+  | 'llm_access' | 'ai_processing' | 'deployment_access' | 'system_config'
+  | 'forge_access' | 'tool_management' | 'file_system_access'
+  | 'command_execution' | 'system_monitoring' | 'performance_data';
+
+// Describes an application that can be run within the OS.
+export interface Application {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: ApplicationCategory;
+  version: string;
+  author: string;
+  windowType: WindowType;
+  permissions: Permission[];
+  isSystemApp: boolean;
+  config: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Categories for organizing applications.
+export type ApplicationCategory = 
+  | 'SYSTEM' | 'UTILITY' | 'PRODUCTIVITY' | 'DEVELOPMENT' | 'AI_SERVICE';
+
+// Defines the type of content a window will render.
+export type WindowType = 
+  | 'FILE_EXPLORER' | 'MONITORING' | 'TERMINAL' | 'SETTINGS' | 'TASK_MANAGER'
+  | 'AGENT_MANAGER' | 'SERVICE_MANAGER' | 'CUSTOM';
+
+// Represents the state of a single window on the desktop.
+export interface WindowState {
+  id: string;
+  title: string;
+  type: WindowType;
+  content: WindowContent;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  isMinimized: boolean;
+  isMaximized: boolean;
+  isActive: boolean;
+  zIndex: number;
+}
+
+// Defines the content to be displayed within a window.
+export interface WindowContent {
+  type: 'component' | 'url' | 'custom';
+  component?: string; // Name of the React component to render
+  url?: string;
+  data?: any; // Props or data to pass to the component
+}
+
+// Represents a system notification.
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  priority: NotificationPriority;
+  isRead: boolean;
+  timestamp: Date;
+  action?: {
+    label: string;
+    callback: () => void;
+  };
+}
+
+export type NotificationType = 'system' | 'service' | 'alert' | 'info';
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
+
+// Represents real-time system performance metrics.
+export interface SystemMetrics {
+  cpu: { usage: number; temperature: number; };
+  memory: { total: number; used: number; percentage: number; };
+  disk: { total: number; used: number; percentage: number; };
+  network: { latency: number; bandwidth: number; };
+  agents: { active: number; total: number; };
+  uptime: number;
+}
+
+// Defines an AI tool that can be used by AI agents.
+export interface AITool {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  version: string;
+  parameters: ToolParameter[];
+  capabilities: string[];
+  status: 'active' | 'inactive' | 'deprecated';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Defines a parameter for an AI tool.
+export interface ToolParameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  description: string;
+  required: boolean;
+  defaultValue?: any;
+}
+
+// Defines an AI agent.
+export interface AIAgent {
+  id: string;
+  name: string;
+  description: string;
+  type: 'chat' | 'task' | 'analysis' | 'automation';
+  model: string;
+  tools: string[];
+  capabilities: string[];
+  status: 'active' | 'inactive' | 'training';
+  performance: {
+    accuracy: number;
+    speed: number;
+    reliability: number;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Represents a node in the Neural Logic Distribution System (NLDS).
+export interface NLDSNode {
+  id: string;
+  name: string;
+  type: 'input' | 'processing' | 'output' | 'memory';
+  connections: string[];
+  state: any;
+  performance: {
+    throughput: number;
+    latency: number;
+    accuracy: number;
+  };
+  status: 'active' | 'inactive' | 'error';
+}
+
+// Represents a cognitive operation performed by the AI.
+export interface CognitiveOperation {
+  id: string;
+  name: string;
+  type: 'analysis' | 'synthesis' | 'prediction' | 'optimization';
+  input: any;
+  output?: any;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  progress: number;
+  startTime: Date;
+  endTime?: Date;
+  error?: string;
+}
+
+
+Task 2.2: Implement Zustand State Management
+Create the directory src/lib/stores and add the following store files. These stores are optimized to prevent common performance issues like infinite re-renders.
+Subtask 2.2.1: auth-store.ts
+// src/lib/stores/auth-store.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { User } from '@/core/types';
+
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  login: (username: string, password: string) => Promise<void>;
+  register: (data: { username: string; email: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+  clearError: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      isLoading: true, // Start with loading true to check session on app load
+      error: null,
+
+      login: async (username, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+          if (!response.ok) throw new Error('Login failed');
+          const { user } = await response.json();
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Login failed', isLoading: false });
+        }
+      },
+
+      register: async (data) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          if (!response.ok) throw new Error('Registration failed');
+          const { user } = await response.json();
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Registration failed', isLoading: false });
+        }
+      },
+
+      logout: async () => {
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+        set({ user: null, isAuthenticated: false, error: null });
+      },
+
+      refresh: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await fetch('/api/auth/refresh', { method: 'POST' });
+          if (response.ok) {
+            const { user } = await response.json();
+            set({ user, isAuthenticated: true });
+          } else {
+            set({ user: null, isAuthenticated: false });
+          }
+        } catch (error) {
+          console.error('Refresh error:', error);
+          set({ user: null, isAuthenticated: false });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      clearError: () => set({ error: null }),
+    }),
+    {
+      name: 'jaegis-auth-storage', // Key for localStorage persistence
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+    }
+  )
+);
+
+
+Subtask 2.2.2: window-store.ts
+// src/lib/stores/window-store.ts
+import { create } from 'zustand';
+import { WindowState, WindowType, WindowContent } from '@/core/types';
+
+interface WindowManagerStore {
+  windows: WindowState[];
+  activeWindowId: string | null;
+  nextZIndex: number;
+  openWindow: (config: Omit<WindowState, 'id' | 'isMinimized' | 'isMaximized' | 'isActive' | 'zIndex'>) => string;
+  closeWindow: (windowId: string) => void;
+  minimizeWindow: (windowId: string) => void;
+  maximizeWindow: (windowId: string) => void;
+  restoreWindow: (windowId: string) => void;
+  focusWindow: (windowId: string) => void;
+  updateWindowPosition: (windowId: string, position: { x: number; y: number }) => void;
+  updateWindowSize: (windowId: string, size: { width: number; height: number }) => void;
+}
+
+export const useWindowManager = create<WindowManagerStore>((set, get) => ({
+  windows: [],
+  activeWindowId: null,
+  nextZIndex: 100,
+
+  openWindow: (config) => {
+    const newWindowId = `window-${Date.now()}`;
+    const nextZIndex = get().nextZIndex;
+
+    const newWindow: WindowState = {
+      id: newWindowId,
+      ...config,
+      position: config.position || { x: Math.random() * 200 + 50, y: Math.random() * 200 + 50 },
+      size: config.size || { width: 800, height: 600 },
+      isMinimized: false,
+      isMaximized: false,
+      isActive: true,
+      zIndex: nextZIndex + 1,
+    };
+
+    set((state) => ({
+      windows: state.windows.map(w => ({ ...w, isActive: false })).concat(newWindow),
+      activeWindowId: newWindowId,
+      nextZIndex: nextZIndex + 1,
+    }));
+    return newWindowId;
+  },
+
+  closeWindow: (windowId) => {
+    set((state) => ({
+      windows: state.windows.filter((w) => w.id !== windowId),
+      activeWindowId: state.activeWindowId === windowId ? null : state.activeWindowId,
+    }));
+  },
+  
+  focusWindow: (windowId) => {
+    const state = get();
+    if (state.activeWindowId === windowId) return;
+    const nextZIndex = state.nextZIndex;
+    set({
+      windows: state.windows.map((w) => ({
+        ...w,
+        isActive: w.id === windowId,
+        zIndex: w.id === windowId ? nextZIndex + 1 : w.zIndex,
+      })),
+      activeWindowId: windowId,
+      nextZIndex: nextZIndex + 1,
+    });
+  },
+
+  minimizeWindow: (windowId) => {
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === windowId ? { ...w, isMinimized: true, isActive: false } : w
+      ),
+      activeWindowId: state.activeWindowId === windowId ? null : state.activeWindowId,
+    }));
+  },
+
+  maximizeWindow: (windowId) => {
+    get().focusWindow(windowId);
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === windowId ? { ...w, isMaximized: true, isMinimized: false } : w
+      ),
+    }));
+  },
+
+  restoreWindow: (windowId) => {
+    get().focusWindow(windowId);
+    set((state) => ({
+      windows: state.windows.map((w) =>
+        w.id === windowId ? { ...w, isMaximized: false, isMinimized: false } : w
+      ),
+    }));
+  },
+  
+  updateWindowPosition: (windowId, position) => {
+    set(state => ({
+      windows: state.windows.map(w => w.id === windowId ? { ...w, position } : w)
+    }));
+  },
+
+  updateWindowSize: (windowId, size) => {
+    set(state => ({
+      windows: state.windows.map(w => w.id === windowId ? { ...w, size } : w)
+    }));
+  },
+}));
+
+
+Subtask 2.2.3: notification-store.ts
+// src/lib/stores/notification-store.ts
+import { create } from 'zustand';
+import { Notification } from '@/core/types';
+
+interface NotificationState {
+  notifications: Notification[];
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => string;
+  removeNotification: (notificationId: string) => void;
+  markAsRead: (notificationId: string) => void;
+  clearAll: () => void;
+}
+
+export const useNotificationStore = create<NotificationState>((set) => ({
+  notifications: [],
+  addNotification: (notification) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: `notification-${Date.now()}`,
+      timestamp: new Date(),
+      isRead: false,
+    };
+    set((state) => ({
+      notifications: [newNotification, ...state.notifications].slice(0, 20), // Limit to 20 notifications
+    }));
+    return newNotification.id;
+  },
+  removeNotification: (notificationId) => {
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== notificationId),
+    }));
+  },
+  markAsRead: (notificationId) => {
+    set((state) => ({
+      notifications: state.notifications.map((n) =>
+        n.id === notificationId ? { ...n, isRead: true } : n
+      ),
+    }));
+  },
+  clearAll: () => {
+    set({ notifications: [] });
+  },
+}));
+
+
+Subtask 2.2.4: system-store.ts
+// src/lib/stores/system-store.ts
+import { create } from 'zustand';
+import { SystemMetrics } from '@/core/types';
+
+interface SystemState {
+  systemMetrics: SystemMetrics | null;
+  isOnline: boolean;
+  updateSystemMetrics: (metrics: SystemMetrics) => void;
+  setOnlineStatus: (isOnline: boolean) => void;
+}
+
+export const useSystemStore = create<SystemState>((set) => ({
+  systemMetrics: {
+    cpu: { usage: 0, temperature: 0 },
+    memory: { total: 0, used: 0, percentage: 0 },
+    disk: { total: 0, used: 0, percentage: 0 },
+    network: { latency: 0, bandwidth: 0 },
+    agents: { active: 0, total: 0 },
+    uptime: 0,
+  },
+  isOnline: true,
+  updateSystemMetrics: (metrics) => set({ systemMetrics: metrics }),
+  setOnlineStatus: (isOnline) => set({ isOnline }),
+}));
+
+
+Task 2.3: Create Database Client Singleton
+Create the file src/lib/db.ts to ensure only one instance of PrismaClient is used across the application, preventing connection pool exhaustion.
+// src/lib/db.ts
+import { PrismaClient } from '@prisma/client';
+
+// Add prisma to the NodeJS global type
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+// Prevent multiple instances of Prisma Client in development
+export const db = globalThis.prisma || new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = db;
+}
+
+
+Phase 3: Authentication System
+This phase focuses on building the backend API routes for user authentication, including login, registration, session refresh, and logout functionalities. This is a critical step to secure the application.
+Task 3.1: Create Authentication API Routes
+Create the directory src/app/api/auth and add the following route handler files.
+Subtask 3.1.1: Login Route (src/app/api/auth/login/route.ts)
+This endpoint handles user login, verifies credentials, and returns JWT access and refresh tokens.
+// src/app/api/auth/login/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+
+export async function POST(request: NextRequest) {
+  try {
+    const { username, password } = await request.json();
+
+    if (!username || !password) {
+      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
+    }
+
+    const user = await db.user.findUnique({ where: { username } });
+
+    if (!user || !user.isActive) {
+      return NextResponse.json({ error: 'Invalid credentials or inactive user' }, { status: 401 });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Store refresh token in a secure, httpOnly cookie
+    cookies().set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+    
+    // Store session in database for server-side validation
+    await db.session.create({
+      data: {
+        userId: user.id,
+        refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    await db.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+    
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json({ user: userWithoutPassword, accessToken });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+
+Subtask 3.1.2: Registration Route (src/app/api/auth/register/route.ts)
+This endpoint handles new user registration, hashes the password, and stores the user in the database.
+// src/app/api/auth/register/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import bcrypt from 'bcryptjs';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { username, email, password } = await request.json();
+
+    if (!username || !email || !password) {
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+    }
+
+    const existingUser = await db.user.findFirst({
+      where: { OR: [{ username }, { email }] },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'User with this username or email already exists' }, { status: 409 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await db.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        role: 'USER', // Default role
+        permissions: ['system_access'], // Default permissions
+      },
+    });
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json({ user: userWithoutPassword }, { status: 201 });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+
+Subtask 3.1.3: Refresh Token Route (src/app/api/auth/refresh/route.ts)
+This endpoint uses the httpOnly refresh token to issue a new access token, allowing the user to stay logged in.
+// src/app/api/auth/refresh/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+
+export async function POST(request: NextRequest) {
+  try {
+    const cookieStore = cookies();
+    const refreshToken = cookieStore.get('refreshToken')?.value;
+
+    if (!refreshToken) {
+      return NextResponse.json({ error: 'Refresh token not found' }, { status: 401 });
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
+    }
+
+    const session = await db.session.findFirst({
+      where: {
+        userId: decoded.userId,
+        refreshToken,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!session) {
+      return NextResponse.json({ error: 'Session not found or expired' }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({ where: { id: decoded.userId } });
+
+    if (!user || !user.isActive) {
+      return NextResponse.json({ error: 'User not found or inactive' }, { status: 401 });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+    
+    const { password: _, ...userWithoutPassword } = user;
+
+    return NextResponse.json({ user: userWithoutPassword, accessToken });
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+
+Subtask 3.1.4: Logout Route (src/app/api/auth/logout/route.ts)
+This endpoint clears the user's session from the database and removes the httpOnly cookie.
+// src/app/api/auth/logout/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { cookies } from 'next/headers';
+
+export async function POST(request: NextRequest) {
+  try {
+    const cookieStore = cookies();
+    const refreshToken = cookieStore.get('refreshToken')?.value;
+
+    if (refreshToken) {
+      await db.session.deleteMany({
+        where: { refreshToken },
+      });
+    }
+
+    cookieStore.delete('refreshToken');
+
+    return NextResponse.json({ message: 'Logged out successfully' });
+
+  } catch (error) {
+    console.error('Logout error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+
+Phase 4: UI and Desktop Environment
+This phase involves building the frontend components that create the JAEGIS OS desktop experience, including the main layout, login forms, and the desktop environment itself.
+Task 4.1: Global Layout and Styles
+Subtask 4.1.1: Update Global Styles (src/app/globals.css)
+Add base styles for the application, including a dark theme and custom scrollbars.
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary));
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted));
+  }
+}
+
+
+Subtask 4.1.2: Update Root Layout (src/app/layout.tsx)
+Set up the root layout to include the Toaster for notifications and apply the main font.
+// src/app/layout.tsx
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+export const metadata: Metadata = {
+  title: "JAEGIS OS",
+  description: "AI-Powered Web Operating System",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className="dark">
+      <body className={`${inter.variable} font-sans`}>
+        {children}
+        <Toaster />
+      </body>
+    </html>
+  );
+}
+
+
+Task 4.2: Create Authentication UI
+Create the directory src/components/auth and add the login and registration form components.
+Subtask 4.2.1: Login Form (src/components/auth/login-form.tsx)
+// src/components/auth/login-form.tsx
+'use client';
+
+import { useState } from 'react';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Terminal } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+export function LoginForm() {
+  const { login, isLoading, error, clearError } = useAuthStore();
+  const [username, setUsername] = useState('user');
+  const [password, setPassword] = useState('user123');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    await login(username, password);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>Enter your credentials to access JAEGIS OS.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Login Failed</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. admin"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="e.g. admin123"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Sign In
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+Subtask 4.2.2: Registration Form (src/components/auth/register-form.tsx)
+// src/components/auth/register-form.tsx
+'use client';
+
+import { useState } from 'react';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Terminal } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+export function RegisterForm() {
+  const { register, isLoading, error, clearError } = useAuthStore();
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    await register({ username, email, password });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Register</CardTitle>
+        <CardDescription>Create a new account to get started.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Registration Failed</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="reg-username">Username</Label>
+            <Input
+              id="reg-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reg-email">Email</Label>
+            <Input
+              id="reg-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reg-password">Password</Label>
+            <Input
+              id="reg-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Account
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+
+Subtask 4.2.3: Authentication Tabs (src/components/auth/auth-tabs.tsx)
+This component will allow users to switch between the login and registration forms.
+// src/components/auth/auth-tabs.tsx
+'use client';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoginForm } from './login-form';
+import { RegisterForm } from './register-form';
+
+export function AuthTabs() {
+  return (
+    <Tabs defaultValue="login" className="w-[400px]">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="login">Login</TabsTrigger>
+        <TabsTrigger value="register">Register</TabsTrigger>
+      </TabsList>
+      <TabsContent value="login">
+        <LoginForm />
+      </TabsContent>
+      <TabsContent value="register">
+        <RegisterForm />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+
+Task 4.3: Create the Desktop Environment Components
+This is the core of the UI. Create the directory src/components/desktop and add the following components.
+Subtask 4.3.1: Desktop Background (src/components/desktop/desktop-background.tsx)
+A visually engaging, animated background for the OS.
+// src/components/desktop/desktop-background.tsx
+'use client';
+
+import { memo } from 'react';
+import { motion } from 'framer-motion';
+
+export const DesktopBackground = memo(() => {
+  return (
+    <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950">
+      <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+      <div className="absolute left-0 right-0 top-[-10%] h-[1000px] w-[1000px] rounded-full bg-[radial-gradient(circle_400px_at_50%_300px,#3b82f633,transparent)]"></div>
+    </div>
+  );
+});
+
+DesktopBackground.displayName = 'DesktopBackground';
+
+
+Subtask 4.3.2: Application Launcher (src/components/desktop/app-launcher.tsx)
+A searchable overlay for launching applications.
+// src/components/desktop/app-launcher.tsx
+'use client';
+
+import { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useWindowManager } from '@/lib/stores/window-store';
+
+const APPS = [
+    { name: 'File Explorer', icon: '📁', type: 'FILE_EXPLORER' },
+    { name: 'System Monitor', icon: '📊', type: 'MONITORING' },
+    { name: 'AI Terminal', icon: '🤖', type: 'TERMINAL' },
+    { name: 'Settings', icon: '⚙️', type: 'SETTINGS' },
+];
+
+export function AppLauncher({ onClose }: { onClose: () => void }) {
+    const [query, setQuery] = useState('');
+    const openWindow = useWindowManager((state) => state.openWindow);
+
+    const filteredApps = useMemo(() =>
+        APPS.filter(app => app.name.toLowerCase().includes(query.toLowerCase())),
+        [query]
+    );
+
+    const handleAppClick = (app: typeof APPS[0]) => {
+        openWindow({
+            title: app.name,
+            type: app.type as any,
+            content: { type: 'component', component: app.type },
+        });
+        onClose();
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={onClose}
+        >
+            <motion.div
+                initial={{ scale: 0.95, y: -20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.95, y: -20 }}
+                className="w-full max-w-md bg-slate-800/80 border border-slate-700 rounded-xl shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="p-4 border-b border-slate-700 flex items-center">
+                    <Search className="h-5 w-5 text-slate-400 mr-3" />
+                    <Input
+                        autoFocus
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search for apps..."
+                        className="bg-transparent border-none focus:ring-0 text-white placeholder:text-slate-400"
+                    />
+                    <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="p-4 max-h-80 overflow-y-auto">
+                    <ul className="space-y-2">
+                        {filteredApps.map((app) => (
+                            <li key={app.name}>
+                                <button
+                                    onClick={() => handleAppClick(app)}
+                                    className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors text-left"
+                                >
+                                    <span className="text-2xl">{app.icon}</span>
+                                    <span className="text-white">{app.name}</span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
+
+Subtask 4.3.3: Taskbar (src/components/desktop/taskbar.tsx)
+The main navigation bar at the bottom of the screen.
+// src/components/desktop/taskbar.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useWindowManager } from '@/lib/stores/window-store';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { AppWindow, Bell, Wifi, Battery } from 'lucide-react';
+
+export function Taskbar({ onLauncherClick }: { onLauncherClick: () => void }) {
+    const [time, setTime] = useState(new Date());
+    const windows = useWindowManager((state) => state.windows);
+    const { focusWindow, minimizeWindow } = useWindowManager();
+
+    useEffect(() => {
+        const timer = setInterval(() => setTime(new Date()), 1000 * 30); // Update every 30 seconds
+        return () => clearInterval(timer);
+    }, []);
+
+    const handleTaskClick = (id: string, isActive: boolean) => {
+        if (isActive) {
+            minimizeWindow(id);
+        } else {
+            focusWindow(id);
+        }
+    };
+
+    return (
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-black/20 backdrop-blur-lg border-t border-white/10 flex items-center justify-between px-4 z-40">
+            {/* Left: Launcher & Open Apps */}
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={onLauncherClick}>
+                    <AppWindow className="h-5 w-5" />
+                </Button>
+                <div className="h-6 w-px bg-white/20" />
+                <div className="flex items-center gap-1">
+                    {windows.filter(w => !w.isMinimized).map(win => (
+                        <motion.button
+                            key={win.id}
+                            layoutId={`task-${win.id}`}
+                            onClick={() => handleTaskClick(win.id, win.isActive)}
+                            className={`px-3 py-1 rounded-md text-sm transition-colors ${win.isActive ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                        >
+                            {win.title}
+                        </motion.button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Right: System Tray */}
+            <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <Wifi className="h-4 w-4" />
+                    <Battery className="h-4 w-4" />
+                    <Bell className="h-4 w-4" />
+                </div>
+                <span>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+        </div>
+    );
+}
+
+
+Subtask 4.3.4: Window Manager (src/components/desktop/window-manager.tsx)
+This component renders and manages all open application windows.
+// src/components/desktop/window-manager.tsx
+'use client';
+
+import { useWindowManager } from '@/lib/stores/window-store';
+import { Window } from './window';
+
+export function WindowManager() {
+    const windows = useWindowManager((state) => state.windows);
+
+    return (
+        <div className="absolute inset-0">
+            {windows.map((win) => (
+                !win.isMinimized && <Window key={win.id} windowState={win} />
+            ))}
+        </div>
+    );
+}
+
+
+Subtask 4.3.5: Window Component (src/components/desktop/window.tsx)
+The individual, draggable, and resizable window frame.
+// src/components/desktop/window.tsx
+'use client';
+
+import { motion, PanInfo } from 'framer-motion';
+import { useWindowManager } from '@/lib/stores/window-store';
+import { WindowState } from '@/core/types';
+import { X, Minus, Square } from 'lucide-react';
+
+export function Window({ windowState }: { windowState: WindowState }) {
+    const {
+        closeWindow,
+        minimizeWindow,
+        focusWindow,
+        updateWindowPosition,
+    } = useWindowManager();
+
+    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        updateWindowPosition(windowState.id, {
+            x: windowState.position.x + info.offset.x,
+            y: windowState.position.y + info.offset.y,
+        });
+    };
+
+    return (
+        <motion.div
+            drag
+            dragMomentum={false}
+            onDragStart={() => focusWindow(windowState.id)}
+            onDragEnd={handleDragEnd}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            style={{
+                position: 'absolute',
+                left: windowState.position.x,
+                top: windowState.position.y,
+                width: windowState.size.width,
+                height: windowState.size.height,
+                zIndex: windowState.zIndex,
+            }}
+            className={`bg-slate-800/80 backdrop-blur-md rounded-lg shadow-2xl border ${windowState.isActive ? 'border-blue-500' : 'border-slate-700'} flex flex-col`}
+        >
+            {/* Window Header */}
+            <div className="h-8 bg-black/20 flex items-center justify-between px-2 cursor-move">
+                <span className="text-sm font-medium">{windowState.title}</span>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => minimizeWindow(windowState.id)} className="p-1 rounded hover:bg-white/10"><Minus className="h-3 w-3" /></button>
+                    <button className="p-1 rounded hover:bg-white/10"><Square className="h-3 w-3" /></button>
+                    <button onClick={() => closeWindow(windowState.id)} className="p-1 rounded hover:bg-red-500/50"><X className="h-3 w-3" /></button>
+                </div>
+            </div>
+
+            {/* Window Content */}
+            <div className="flex-1 p-4 overflow-auto">
+                {/* Content will be rendered here based on windowState.content */}
+                <p>Content for {windowState.title}</p>
+            </div>
+        </motion.div>
+    );
+}
+
+
+Subtask 4.3.6: Update DesktopEnvironment to Assemble the UI
+Now, replace the placeholder content in desktop-environment.tsx with the newly created components.
+// src/components/desktop/desktop-environment.tsx
+'use client';
+
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { DesktopBackground } from './desktop-background';
+import { Taskbar } from './taskbar';
+import { WindowManager } from './window-manager';
+import { AppLauncher } from './app-launcher';
+
+export function DesktopEnvironment() {
+  const [isLauncherOpen, setLauncherOpen] = useState(false);
+
+  return (
+    <div className="h-screen w-screen bg-background text-foreground overflow-hidden relative">
+      <DesktopBackground />
+      <WindowManager />
+      <Taskbar onLauncherClick={() => setLauncherOpen(true)} />
+      <AnimatePresence>
+        {isLauncherOpen && <AppLauncher onClose={() => setLauncherOpen(false)} />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+Task 4.4: Update the Main Page
+Finally, update src/app/page.tsx to use the ClientAuthProvider to manage the UI state.
+// src/app/page.tsx
+import { ClientAuthProvider } from "@/components/client-auth-provider";
+
+export default function HomePage() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background">
+      <ClientAuthProvider />
+    </main>
+  );
+}
+
+
+Phase 5: AI Service Integration
+This phase connects the frontend to the powerful AI capabilities of JAEGIS OS by creating API routes for AI services and building the corresponding UI components. This is where the "AI-Powered" aspect of the OS comes to life.
+Task 5.1: Create AI Service API Routes
+Create the necessary API routes for chat, image generation, and web search. These routes will securely handle requests from the client, interact with the z-ai-web-dev-sdk, and return the results. Using dynamic imports for the SDK is critical to prevent Node.js modules from being bundled into the client-side code.
+Subtask 5.1.1: Chat API Route (src/app/api/chat/route.ts)
+// src/app/api/chat/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { messages } = await request.json();
+    if (!messages) {
+      return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
+    }
+    
+    // Dynamically import the SDK to ensure it's only used on the server
+    const ZAI = await import('z-ai-web-dev-sdk');
+    const zai = await ZAI.create({ apiKey: process.env.ZAI_API_KEY });
+    
+    const completion = await zai.chat.completions.create({ messages });
+
+    return NextResponse.json(completion.choices[0].message);
+  } catch (error) {
+    console.error('Chat API error:', error);
+    return NextResponse.json({ error: 'Failed to get chat completion' }, { status: 500 });
+  }
+}
+
+
+Subtask 5.1.2: Image Generation API Route (src/app/api/image/route.ts)
+// src/app/api/image/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { prompt } = await request.json();
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+    
+    const ZAI = await import('z-ai-web-dev-sdk');
+    const zai = await ZAI.create({ apiKey: process.env.ZAI_API_KEY });
+    
+    const response = await zai.images.generations.create({ prompt, n: 1, size: "1024x1024", response_format: 'b64_json' });
+
+    return NextResponse.json({ b64_json: response.data[0].b64_json });
+  } catch (error) {
+    console.error('Image API error:', error);
+    return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 });
+  }
+}
+
+
+Subtask 5.1.3: Web Search API Route (src/app/api/search/route.ts)
+// src/app/api/search/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { query } = await request.json();
+    if (!query) {
+      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+    }
+    
+    const ZAI = await import('z-ai-web-dev-sdk');
+    const zai = await ZAI.create({ apiKey: process.env.ZAI_API_KEY });
+    
+    const results = await zai.functions.invoke('web_search', { query });
+
+    return NextResponse.json({ results });
+  } catch (error) {
+    console.error('Search API error:', error);
+    return NextResponse.json({ error: 'Failed to perform search' }, { status: 500 });
+  }
+}
+
+
+Task 5.2: Create AI Terminal Application
+This component will be the primary interface for interacting with the AI services, providing a command-line experience within the OS.
+Subtask 5.2.1: AI Terminal Component (src/components/apps/ai-terminal.tsx)
+Create the directory src/components/apps and add the following file.
+// src/components/apps/ai-terminal.tsx
+'use client';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Send, Loader2 } from 'lucide-react';
+
+interface HistoryItem {
+    type: 'prompt' | 'response' | 'error' | 'system';
+    content: string | React.ReactNode;
+}
+
+export function AITerminal() {
+    const [history, setHistory] = useState<HistoryItem[]>([
+        { type: 'system', content: 'JAEGIS AI Terminal Initialized. Type "help" for commands.' }
+    ]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const endOfHistoryRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        endOfHistoryRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [history]);
+
+    const processCommand = useCallback(async (prompt: string) => {
+        const [command, ...args] = prompt.trim().split(' ');
+        const query = args.join(' ');
+        let endpoint = '';
+        let body: any = {};
+        
+        switch(command.toLowerCase()) {
+            case 'chat':
+                endpoint = '/api/chat';
+                body = { messages: [{ role: 'user', content: query }] };
+                break;
+            case 'search':
+                endpoint = '/api/search';
+                body = { query };
+                break;
+            case 'image':
+                endpoint = '/api/image';
+                body = { prompt: query };
+                break;
+            case 'help':
+                setHistory(prev => [...prev, { type: 'system', content: 'Commands: chat <message>, search <query>, image <prompt>' }]);
+                return;
+            default:
+                setHistory(prev => [...prev, { type: 'error', content: `Unknown command: ${command}` }]);
+                return;
+        }
+
+        if (!query) {
+            setHistory(prev => [...prev, { type: 'error', content: `Usage: ${command} <query>` }]);
+            return;
+        }
+
+        try {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+
+            if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText}`);
+            
+            const data = await res.json();
+            let content: React.ReactNode;
+
+            if (data.b64_json) {
+                content = <img src={`data:image/png;base64,${data.b64_json}`} alt={query} className="max-w-xs rounded-md mt-2" />;
+            } else {
+                content = data.content || JSON.stringify(data.results || data, null, 2);
+            }
+
+            setHistory(prev => [...prev, { type: 'response', content }]);
+        } catch (err) {
+            const error = err as Error;
+            setHistory(prev => [...prev, { type: 'error', content: error.message }]);
+        }
+    }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isLoading) return;
+
+        const prompt = input;
+        setHistory(prev => [...prev, { type: 'prompt', content: prompt }]);
+        setInput('');
+        setIsLoading(true);
+        await processCommand(prompt);
+        setIsLoading(false);
+    };
+
+    return (
+        <div className="h-full flex flex-col bg-black/50 font-mono text-sm text-green-300">
+            <div className="flex-1 p-4 overflow-y-auto">
+                {history.map((item, index) => (
+                    <div key={index} className="mb-2">
+                        {item.type === 'prompt' && <span className="text-blue-400">> </span>}
+                        <div className={`whitespace-pre-wrap inline ${item.type === 'error' ? 'text-red-400' : item.type === 'system' ? 'text-yellow-400' : ''}`}>
+                            {item.content}
+                        </div>
+                    </div>
+                ))}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin text-yellow-400" />}
+                <div ref={endOfHistoryRef} />
+            </div>
+            <form onSubmit={handleSubmit} className="p-2 border-t border-slate-700 flex items-center gap-2">
+                <span className="text-blue-400">></span>
+                <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type a command..."
+                    className="bg-transparent border-none focus:ring-0 flex-1"
+                    disabled={isLoading}
+                    autoComplete="off"
+                />
+                <Button type="submit" size="icon" disabled={isLoading}>
+                    <Send className="h-4 w-4" />
+                </Button>
+            </form>
+        </div>
+    );
+}
+
+
+Task 5.3: Update Window Component to Render Apps
+Modify the window.tsx component to dynamically render the content of the applications, such as the AI Terminal.
+// src/components/desktop/window.tsx
+'use client';
+
+import { motion, PanInfo } from 'framer-motion';
+import { useWindowManager } from '@/lib/stores/window-store';
+import { WindowState } from '@/core/types';
+import { X, Minus, Square } from 'lucide-react';
+import { AITerminal } from '@/components/apps/ai-terminal';
+import { memo } from 'react';
+
+// A component to map window types to actual application components.
+const AppContent = memo(({ type }: { type: string }) => {
+    switch (type) {
+        case 'TERMINAL':
+            return <AITerminal />;
+        // Future applications will be added here.
+        // case 'FILE_EXPLORER':
+        //     return <FileExplorer />;
+        default:
+            return <div className="p-4">Content for {type} is not yet implemented.</div>;
+    }
+});
+AppContent.displayName = 'AppContent';
+
+export function Window({ windowState }: { windowState: WindowState }) {
+    const {
+        closeWindow,
+        minimizeWindow,
+        focusWindow,
+        updateWindowPosition,
+    } = useWindowManager();
+
+    const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+        updateWindowPosition(windowState.id, {
+            x: windowState.position.x + info.offset.x,
+            y: windowState.position.y + info.offset.y,
+        });
+    };
+
+    return (
+        <motion.div
+            drag
+            dragMomentum={false}
+            dragHandle=".drag-handle" // Only allow dragging from the header
+            onMouseDown={() => focusWindow(windowState.id)}
+            onDragEnd={handleDragEnd}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            style={{
+                position: 'absolute',
+                left: windowState.position.x,
+                top: windowState.position.y,
+                width: windowState.size.width,
+                height: windowState.size.height,
+                zIndex: windowState.zIndex,
+            }}
+            className={`bg-slate-800/80 backdrop-blur-md rounded-lg shadow-2xl border ${windowState.isActive ? 'border-blue-500' : 'border-slate-700'} flex flex-col overflow-hidden`}
+        >
+            {/* Window Header */}
+            <div className="h-8 bg-black/20 flex items-center justify-between px-2 cursor-move drag-handle flex-shrink-0">
+                <span className="text-sm font-medium select-none">{windowState.title}</span>
+                <div className="flex items-center gap-1">
+                    <button onClick={() => minimizeWindow(windowState.id)} className="p-1 rounded hover:bg-white/10"><Minus className="h-3 w-3" /></button>
+                    <button className="p-1 rounded hover:bg-white/10"><Square className="h-3 w-3" /></button>
+                    <button onClick={() => closeWindow(windowState.id)} className="p-1 rounded hover:bg-red-500/50"><X className="h-3 w-3" /></button>
+                </div>
+            </div>
+
+            {/* Window Content */}
+            <div className="flex-1 overflow-auto">
+                <AppContent type={windowState.content.component!} />
+            </div>
+        </motion.div>
+    );
+}
+
+
+Phase 6: Real-time Communication
+This phase implements the real-time layer using Socket.IO for features like system monitoring and notifications.
+Task 6.1: Set up Socket.IO Server
+Create the file src/pages/api/socket.ts to handle the Socket.IO server logic. Note the use of pages/api which is necessary for this type of server-side, long-running process in Next.js.
+// src/pages/api/socket.ts
+import { Server } from 'socket.io';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { Server as HTTPServer } from 'http';
+import type { Socket as NetSocket } from 'net';
+
+interface SocketServer extends HTTPServer {
+  io?: Server;
+}
+
+interface SocketNextApiResponse extends NextApiResponse {
+  socket: NetSocket & {
+    server: SocketServer;
+  };
+}
+
+// Disable the default body parser for this route, as we're handling a raw socket connection.
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
+export default function handler(req: NextApiRequest, res: SocketNextApiResponse) {
+  if (res.socket.server.io) {
+    console.log('Socket is already running');
+  } else {
+    console.log('Socket is initializing');
+    const io = new Server(res.socket.server, {
+      path: '/api/socket_io',
+      addTrailingSlash: false,
+    });
+    res.socket.server.io = io;
+
+    io.on('connection', socket => {
+      console.log(`Socket connected: ${socket.id}`);
+      
+      // Example of a periodic event emitter for system metrics
+      const metricsInterval = setInterval(() => {
+        socket.emit('system-metrics', {
+          cpu: { usage: Math.random() * 100 },
+          memory: { percentage: Math.random() * 100 },
+        });
+      }, 5000);
+
+      socket.on('disconnect', () => {
+        console.log(`Socket disconnected: ${socket.id}`);
+        clearInterval(metricsInterval);
+      });
+    });
+  }
+  res.end();
+}
+
+
+Task 6.2: Create Client-side Socket Hook
+Create a custom hook src/hooks/use-socket.ts to manage the client-side socket connection.
+// src/hooks/use-socket.ts
+import { useEffect, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+
+export const useSocket = () => {
+    const [socket, setSocket] = useState<Socket | null>(null);
+
+    useEffect(() => {
+        // This fetch call is a workaround to ensure the API route is initialized on the server.
+        fetch('/api/socket');
+
+        const newSocket = io({ path: '/api/socket_io' });
+
+        newSocket.on('connect', () => {
+            console.log('Connected to socket server');
+        });
+        
+        newSocket.on('disconnect', () => {
+            console.log('Disconnected from socket server');
+        });
+
+        setSocket(newSocket);
+
+        // Cleanup on component unmount
+        return () => {
+            newSocket.disconnect();
+        };
+    }, []);
+
+    return socket;
+};
+
+
+Task 6.3: Integrate Real-time Updates
+Update the DesktopEnvironment to use the socket for real-time features like updating the system metrics store.
+// src/components/desktop/desktop-environment.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { DesktopBackground } from './desktop-background';
+import { Taskbar } from './taskbar';
+import { WindowManager } from './window-manager';
+import { AppLauncher } from './app-launcher';
+import { useSocket } from '@/hooks/use-socket';
+import { useSystemStore } from '@/lib/stores/system-store';
+
+export function DesktopEnvironment() {
+  const [isLauncherOpen, setLauncherOpen] = useState(false);
+  const socket = useSocket();
+  const { updateSystemMetrics } = useSystemStore();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for system metrics updates from the server
+    const handleMetrics = (data: any) => {
+        // In a real app, you would merge this with more complete data
+        const store = useSystemStore.getState();
+        if (store.systemMetrics) {
+            updateSystemMetrics({
+                ...store.systemMetrics,
+                cpu: { ...store.systemMetrics.cpu, usage: data.cpu.usage },
+                memory: { ...store.systemMetrics.memory, percentage: data.memory.percentage },
+            });
+        }
+    };
+    
+    socket.on('system-metrics', handleMetrics);
+
+    // Clean up the event listener on component unmount
+    return () => {
+      socket.off('system-metrics', handleMetrics);
+    };
+  }, [socket, updateSystemMetrics]);
+
+  return (
+    <div className="h-screen w-screen bg-background text-foreground overflow-hidden relative">
+      <DesktopBackground />
+      <WindowManager />
+      <Taskbar onLauncherClick={() => setLauncherOpen(true)} />
+      <AnimatePresence>
+        {isLauncherOpen && <AppLauncher onClose={() => setLauncherOpen(false)} />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+
+Phase 7: Advanced Agent & Tool Management
+This phase implements the user-facing applications for creating, managing, and deploying AI agents and tools, as specified in the JAEGIS OS vision. This includes the "Agent Forge" and "Tool Forge".
+Task 7.1: Backend API for Agents & Tools
+Expand the backend to support full CRUD (Create, Read, Update, Delete) operations for agents and tools.
+Subtask 7.1.1: Create Agent Management API Routes (src/app/api/agents/route.ts and src/app/api/agents/[id]/route.ts)
+This endpoint will handle the creation and listing of agents.
+// src/app/api/agents/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db'; // Assuming you will add AIAgent to your Prisma schema
+
+// This is a placeholder. You would replace this with actual database queries.
+const mockAgents: any[] = []; 
+
+export async function GET(request: NextRequest) {
+    // In a real implementation, you would fetch from db.aiAgent.findMany()
+    return NextResponse.json({ agents: mockAgents });
+}
+
+export async function POST(request: NextRequest) {
+    const newAgent = await request.json();
+    newAgent.id = `agent-${Date.now()}`;
+    mockAgents.push(newAgent);
+    // In a real implementation, you would use db.aiAgent.create({ data: newAgent })
+    return NextResponse.json(newAgent, { status: 201 });
+}
+
+
+Subtask 7.1.2: Create Tool Management API Routes (src/app/api/tools/route.ts and src/app/api/tools/[id]/route.ts)
+This endpoint will handle the creation and listing of tools.
+// src/app/api/tools/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db'; // Assuming you will add AITool to your Prisma schema
+
+const mockTools: any[] = [];
+
+export async function GET(request: NextRequest) {
+    return NextResponse.json({ tools: mockTools });
+}
+
+export async function POST(request: NextRequest) {
+    const newTool = await request.json();
+    newTool.id = `tool-${Date.now()}`;
+    mockTools.push(newTool);
+    return NextResponse.json(newTool, { status: 201 });
+}
+
+
+Task 7.2: Frontend UI for Agent Forge
+Create the user interface for managing AI agents.
+Subtask 7.2.1: Agent Forge Component (src/components/apps/agent-forge.tsx)
+// src/components/apps/agent-forge.tsx
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AIAgent } from '@/core/types';
+
+export function AgentForge() {
+    const [agents, setAgents] = useState<AIAgent[]>([]);
+
+    useEffect(() => {
+        const fetchAgents = async () => {
+            const res = await fetch('/api/agents');
+            const data = await res.json();
+            setAgents(data.agents);
+        };
+        fetchAgents();
+    }, []);
+
+    return (
+        <div className="p-4 h-full">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Agent Forge</h1>
+                <Button>Create New Agent</Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {agents.map(agent => (
+                    <Card key={agent.id}>
+                        <CardHeader>
+                            <CardTitle>{agent.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p>{agent.description}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+
+Task 7.3: Integrate New Apps into the OS
+Finally, make the new applications accessible through the OS interface.
+Subtask 7.3.1: Update App Launcher
+Add the new "Agent Forge" and "Tool Forge" applications to the list of available apps.
+// src/components/desktop/app-launcher.tsx
+// ... (imports)
+
+const APPS = [
+    { name: 'File Explorer', icon: '📁', type: 'FILE_EXPLORER' },
+    { name: 'System Monitor', icon: '📊', type: 'MONITORING' },
+    { name: 'AI Terminal', icon: '🤖', type: 'TERMINAL' },
+    { name: 'Settings', icon: '⚙️', type: 'SETTINGS' },
+    { name: 'Agent Forge', icon: '🧠', type: 'AGENT_MANAGER' },
+    { name: 'Tool Forge', icon: '🛠️', type: 'SERVICE_MANAGER' },
+];
+
+// ... (rest of the component)
+
+
+Subtask 7.3.2: Update Window Component to Render New Apps
+Update the window.tsx component to render the new forge applications.
+// src/components/desktop/window.tsx
+// ... (imports)
+import { AgentForge } from '@/components/apps/agent-forge';
+// import { ToolForge } from '@/components/apps/tool-forge'; // To be created
+
+const AppContent = memo(({ type }: { type: string }) => {
+    switch (type) {
+        case 'TERMINAL':
+            return <AITerminal />;
+        case 'AGENT_MANAGER':
+            return <AgentForge />;
+        // case 'SERVICE_MANAGER':
+        //     return <ToolForge />;
+        default:
+            return <div className="p-4">Content for {type} is not yet implemented.</div>;
+    }
+});
+// ... (rest of the component)
+
+
+This concludes the implementation of the advanced AI management features. The JAEGIS OS now has the foundational UI and backend routes for creating and managing a diverse set of AI agents and tools, fulfilling the core vision of the project.
