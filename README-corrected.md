@@ -15,6 +15,7 @@ JAEGIS AI Web OS is an enterprise-grade, universal application foundry that conv
 ## 🏗️ **System Architecture Overview**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph InputLayer["Input Layer"]
         DOC["📄 Documents<br/>DOCX, PDF, PPT, Excel"]
@@ -58,40 +59,67 @@ graph TB
         FASTAPI["⚡ FastAPI<br/>High-Performance APIs"]
     end
     
-    DOC --> PARSER
-    MD --> PARSER
-    HTML --> PARSER
+    DOC -.->|"🔴"| PARSER
+    MD -.->|"🔴"| PARSER
+    HTML -.->|"🔴"| PARSER
     
-    PARSER --> CHUNK
-    CHUNK --> EXTRACT
-    EXTRACT --> OPENAI
-    EXTRACT --> ANTHROPIC
-    EXTRACT --> AZURE
-    EXTRACT --> LOCAL
+    PARSER -.->|"🟣"| CHUNK
+    CHUNK -.->|"🟣"| EXTRACT
+    EXTRACT -.->|"🔵"| OPENAI
+    EXTRACT -.->|"🔵"| ANTHROPIC
+    EXTRACT -.->|"🔵"| AZURE
+    EXTRACT -.->|"🔵"| LOCAL
     
-    OPENAI --> FALLBACK
-    ANTHROPIC --> FALLBACK
-    AZURE --> FALLBACK
-    LOCAL --> FALLBACK
+    OPENAI -.->|"🟠"| FALLBACK
+    ANTHROPIC -.->|"🟠"| FALLBACK
+    AZURE -.->|"🟠"| FALLBACK
+    LOCAL -.->|"🟠"| FALLBACK
     
-    FALLBACK --> REDIS
-    REDIS --> TEMPLATE
-    TEMPLATE --> BUILDER
-    BUILDER --> VALIDATOR
+    FALLBACK -.->|"🟡"| REDIS
+    REDIS -.->|"🟢"| TEMPLATE
+    TEMPLATE -.->|"🟢"| BUILDER
+    BUILDER -.->|"🟢"| VALIDATOR
     
-    VALIDATOR --> NEXTJS
-    VALIDATOR --> REACT
-    VALIDATOR --> PYTHON
-    VALIDATOR --> DJANGO
-    VALIDATOR --> FASTAPI
+    VALIDATOR -.->|"🔴"| NEXTJS
+    VALIDATOR -.->|"🔴"| REACT
+    VALIDATOR -.->|"🔴"| PYTHON
+    VALIDATOR -.->|"🔴"| DJANGO
+    VALIDATOR -.->|"🔴"| FASTAPI
     
-    classDef coreStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef redisStyle fill:#ffecb3,stroke:#f57f17,stroke-width:2px
-    classDef fallbackStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef coreStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    classDef redisStyle fill:#ffecb3,stroke:#f57f17,stroke-width:3px,color:#000
+    classDef fallbackStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000
+    classDef inputStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px,color:#000
+    classDef outputStyle fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000
     
     class JAEGISCore coreStyle
     class REDIS redisStyle
     class FALLBACK fallbackStyle
+    class InputLayer inputStyle
+    class OutputLayer outputStyle
+    
+    linkStyle 0 stroke:#ff0066,stroke-width:4px
+    linkStyle 1 stroke:#ff0066,stroke-width:4px
+    linkStyle 2 stroke:#ff0066,stroke-width:4px
+    linkStyle 3 stroke:#9c27b0,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#2196f3,stroke-width:4px
+    linkStyle 6 stroke:#2196f3,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#ff9800,stroke-width:4px
+    linkStyle 10 stroke:#ff9800,stroke-width:4px
+    linkStyle 11 stroke:#ff9800,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ffc107,stroke-width:4px
+    linkStyle 14 stroke:#4caf50,stroke-width:4px
+    linkStyle 15 stroke:#4caf50,stroke-width:4px
+    linkStyle 16 stroke:#4caf50,stroke-width:4px
+    linkStyle 17 stroke:#e91e63,stroke-width:4px
+    linkStyle 18 stroke:#e91e63,stroke-width:4px
+    linkStyle 19 stroke:#e91e63,stroke-width:4px
+    linkStyle 20 stroke:#e91e63,stroke-width:4px
+    linkStyle 21 stroke:#e91e63,stroke-width:4px
 ```
 
 **The JAEGIS AI Web OS ecosystem transforms any architectural documentation into production-ready applications through intelligent document analysis, multi-provider AI processing, and enterprise-grade code generation.**
