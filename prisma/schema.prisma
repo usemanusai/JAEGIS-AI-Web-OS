@@ -1,0 +1,214 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  sessions GenerativeSession[]
+}
+
+model GenerativeSession {
+  id                    String        @id @default(cuid())
+  name                  String
+  type                  SessionType   @default(SPEC_TO_SYSTEM)
+  masterPrompt          String?       @db.Text
+  baseDocument          String?       @db.Text
+  systemAnalysis        String?       @db.Text // JSON string
+  status                SessionStatus @default(PENDING)
+  progress              Int           @default(0)
+  logs                  String        @db.Text @default("")
+  parentSessionId       String?
+  generatedArtifactPath String?
+  buildTime             Int?          // milliseconds
+  errorMessage          String?       @db.Text
+  metadata              String        @db.Text @default("{}") // JSON string
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  
+  // User relationship
+  userId                String?
+  user                  User?         @relation(fields: [userId], references: [id])
+  
+  // Self-referential relationship for session hierarchy
+  parentSession         GenerativeSession? @relation("SessionHierarchy", fields: [parentSessionId], references: [id])
+  childSessions         GenerativeSession[] @relation("SessionHierarchy")
+  
+  // Build steps tracking
+  buildSteps            BuildStep[]
+  
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([parentSessionId])
+}
+
+model BuildStep {
+  id                String              @id @default(cuid())
+  sessionId         String
+  stepId            String              // From build document
+  type              BuildStepType
+  description       String
+  command           String?             @db.Text
+  filePath          String?
+  content           String?             @db.Text
+  status            BuildStepStatus     @default(PENDING)
+  executionOrder    Int
+  startTime         DateTime?
+  endTime           DateTime?
+  executionTime     Int?                // milliseconds
+  errorMessage      String?             @db.Text
+  output            String?             @db.Text
+  retryCount        Int                 @default(0)
+  maxRetries        Int                 @default(0)
+  critical          Boolean             @default(false)
+  dependencies      String              @default("[]") // JSON array of step IDs
+  conditions        String              @default("[]") // JSON array of conditions
+  rollbackActions   String              @default("[]") // JSON array of rollback actions
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  // Relations
+  session           GenerativeSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([status])
+  @@index([executionOrder])
+  @@index([type])
+}
+
+model SystemAnalysisCache {
+  id                String    @id @default(cuid())
+  systemTarget      String    @unique // Docker container ID or system identifier
+  analysisData      String    @db.Text // JSON string
+  lastAnalyzed      DateTime  @default(now())
+  version           String    @default("1.0.0")
+  checksumHash      String    // Hash of the system state
+  isValid           Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([systemTarget])
+  @@index([lastAnalyzed])
+  @@index([isValid])
+}
+
+model GenerationTemplate {
+  id                String    @id @default(cuid())
+  name              String    @unique
+  description       String?   @db.Text
+  framework         String    // nextjs, react, vue, etc.
+  category          String    // web, mobile, desktop, api
+  baseDocument      String    @db.Text // JSON string
+  defaultPrompt     String?   @db.Text
+  features          String    @default("[]") // JSON array
+  complexity        String    @default("moderate") // simple, moderate, complex
+  estimatedTime     Int       @default(600000) // milliseconds
+  popularity        Int       @default(0)
+  isPublic          Boolean   @default(true)
+  createdBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Usage tracking
+  usageCount        Int       @default(0)
+  lastUsed          DateTime?
+  
+  @@index([framework])
+  @@index([category])
+  @@index([popularity])
+  @@index([isPublic])
+}
+
+model BuildMetrics {
+  id                String              @id @default(cuid())
+  sessionId         String              @unique
+  totalSteps        Int
+  executedSteps     Int
+  failedSteps       Int
+  skippedSteps      Int
+  buildTime         Int                 // milliseconds
+  maxMemoryMB       Float               @default(0)
+  maxCpuPercent     Float               @default(0)
+  diskUsageMB       Float               @default(0)
+  cacheHitRate      Float               @default(0)
+  aiTokensUsed      Int                 @default(0)
+  aiProcessingTime  Int                 @default(0) // milliseconds
+  createdAt         DateTime            @default(now())
+  
+  // Relations
+  session           GenerativeSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([buildTime])
+  @@index([createdAt])
+}
+
+model ApiUsageLog {
+  id                String    @id @default(cuid())
+  sessionId         String?
+  endpoint          String
+  method            String
+  statusCode        Int
+  responseTime      Int       // milliseconds
+  requestSize       Int       // bytes
+  responseSize      Int       // bytes
+  userAgent         String?
+  ipAddress         String?
+  errorMessage      String?   @db.Text
+  createdAt         DateTime  @default(now())
+  
+  @@index([sessionId])
+  @@index([endpoint])
+  @@index([statusCode])
+  @@index([createdAt])
+}
+
+// Enums
+enum SessionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  PAUSED
+}
+
+enum SessionType {
+  SPEC_TO_SYSTEM
+  SYSTEM_TO_SPEC
+}
+
+enum BuildStepType {
+  RUN_COMMAND
+  WRITE_FILE
+  INSTALL_DEPENDENCY
+  CREATE_DIRECTORY
+  COPY_FILE
+  MODIFY_FILE
+  VALIDATE_STEP
+  CONDITIONAL_STEP
+}
+
+enum BuildStepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  SKIPPED
+  CANCELLED
+}
