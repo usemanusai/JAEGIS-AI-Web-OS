@@ -11,6 +11,7 @@ This document provides detailed component architecture diagrams for JAEGIS AI We
 ### **High-Level Component Overview**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph UserInterface["🖥️ User Interface Layer"]
         CLI["💻 CLI Interface<br/>Interactive Commands"]
@@ -44,30 +45,30 @@ graph TB
         LOGGING["📝 Logging<br/>Audit Trail"]
     end
     
-    CLI --> ROUTER
-    API --> ROUTER
-    WEB --> ROUTER
+    CLI -.->|"🔴"| ROUTER
+    API -.->|"🔴"| ROUTER
+    WEB -.->|"🔴"| ROUTER
     
-    ROUTER --> AUTH
-    AUTH --> VALIDATOR
-    VALIDATOR --> ORCHESTRATOR
+    ROUTER -.->|"🟣"| AUTH
+    AUTH -.->|"🟣"| VALIDATOR
+    VALIDATOR -.->|"🟣"| ORCHESTRATOR
     
-    ORCHESTRATOR --> DOC_PROC
-    ORCHESTRATOR --> AI_ENGINE
-    ORCHESTRATOR --> CODE_GEN
-    ORCHESTRATOR --> BUILD_VAL
+    ORCHESTRATOR -.->|"🔵"| DOC_PROC
+    ORCHESTRATOR -.->|"🔵"| AI_ENGINE
+    ORCHESTRATOR -.->|"🔵"| CODE_GEN
+    ORCHESTRATOR -.->|"🔵"| BUILD_VAL
     
-    DOC_PROC --> CACHE
-    AI_ENGINE --> CACHE
-    CODE_GEN --> STORAGE
-    BUILD_VAL --> STORAGE
+    DOC_PROC -.->|"🟠"| CACHE
+    AI_ENGINE -.->|"🟠"| CACHE
+    CODE_GEN -.->|"🟠"| STORAGE
+    BUILD_VAL -.->|"🟠"| STORAGE
     
-    AI_ENGINE --> AI_PROVIDERS
-    ORCHESTRATOR --> MONITORING
-    ROUTER --> LOGGING
+    AI_ENGINE -.->|"🟡"| AI_PROVIDERS
+    ORCHESTRATOR -.->|"🟡"| MONITORING
+    ROUTER -.->|"🟡"| LOGGING
     
-    CONFIG --> ORCHESTRATOR
-    CONFIG --> AI_ENGINE
+    CONFIG -.->|"🟢"| ORCHESTRATOR
+    CONFIG -.->|"🟢"| AI_ENGINE
     
     classDef uiStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px,color:#000
     classDef coreStyle fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
@@ -80,6 +81,26 @@ graph TB
     class ProcessingEngine engineStyle
     class DataLayer dataStyle
     class ExternalServices externalStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#9c27b0,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#2196f3,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#ff9800,stroke-width:4px
+    linkStyle 11 stroke:#ff9800,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ffc107,stroke-width:4px
+    linkStyle 15 stroke:#ffc107,stroke-width:4px
+    linkStyle 16 stroke:#ffc107,stroke-width:4px
+    linkStyle 17 stroke:#4caf50,stroke-width:4px
+    linkStyle 18 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -89,6 +110,7 @@ graph TB
 ### **Document Processing Pipeline**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph LR
     subgraph InputSources["📥 Input Sources"]
         DOCX["📄 DOCX Files<br/>Microsoft Word"]
@@ -126,35 +148,35 @@ graph LR
         CACHE_STORE["🗄️ Cache Storage<br/>Performance Optimization"]
     end
     
-    DOCX --> DETECTOR
-    PDF --> DETECTOR
-    PPT --> DETECTOR
-    EXCEL --> DETECTOR
-    MD --> DETECTOR
-    HTML --> DETECTOR
+    DOCX -.->|"🔴"| DETECTOR
+    PDF -.->|"🔴"| DETECTOR
+    PPT -.->|"🔴"| DETECTOR
+    EXCEL -.->|"🔴"| DETECTOR
+    MD -.->|"🔴"| DETECTOR
+    HTML -.->|"🔴"| DETECTOR
     
-    DETECTOR --> VALIDATOR_INPUT
-    VALIDATOR_INPUT --> WORD_PARSER
-    VALIDATOR_INPUT --> PDF_PARSER
-    VALIDATOR_INPUT --> PPT_PARSER
-    VALIDATOR_INPUT --> EXCEL_PARSER
-    VALIDATOR_INPUT --> MD_PARSER
-    VALIDATOR_INPUT --> HTML_PARSER
+    DETECTOR -.->|"🟣"| VALIDATOR_INPUT
+    VALIDATOR_INPUT -.->|"🔵"| WORD_PARSER
+    VALIDATOR_INPUT -.->|"🔵"| PDF_PARSER
+    VALIDATOR_INPUT -.->|"🔵"| PPT_PARSER
+    VALIDATOR_INPUT -.->|"🔵"| EXCEL_PARSER
+    VALIDATOR_INPUT -.->|"🔵"| MD_PARSER
+    VALIDATOR_INPUT -.->|"🔵"| HTML_PARSER
     
-    WORD_PARSER --> EXTRACTOR
-    PDF_PARSER --> EXTRACTOR
-    PPT_PARSER --> EXTRACTOR
-    EXCEL_PARSER --> EXTRACTOR
-    MD_PARSER --> EXTRACTOR
-    HTML_PARSER --> EXTRACTOR
+    WORD_PARSER -.->|"🟠"| EXTRACTOR
+    PDF_PARSER -.->|"🟠"| EXTRACTOR
+    PPT_PARSER -.->|"🟠"| EXTRACTOR
+    EXCEL_PARSER -.->|"🟠"| EXTRACTOR
+    MD_PARSER -.->|"🟠"| EXTRACTOR
+    HTML_PARSER -.->|"🟠"| EXTRACTOR
     
-    EXTRACTOR --> CLEANER
-    CLEANER --> CHUNKER
-    CHUNKER --> ENTITY_EXTRACT
+    EXTRACTOR -.->|"🟡"| CLEANER
+    CLEANER -.->|"🟡"| CHUNKER
+    CHUNKER -.->|"🟡"| ENTITY_EXTRACT
     
-    ENTITY_EXTRACT --> ANALYZER
-    ANALYZER --> METADATA
-    METADATA --> CACHE_STORE
+    ENTITY_EXTRACT -.->|"🟢"| ANALYZER
+    ANALYZER -.->|"🟢"| METADATA
+    METADATA -.->|"🟢"| CACHE_STORE
     
     classDef inputStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef detectionStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -167,6 +189,32 @@ graph LR
     class SpecializedParsers parserStyle
     class ContentProcessing processingStyle
     class OutputGeneration outputStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#e91e63,stroke-width:4px
+    linkStyle 4 stroke:#e91e63,stroke-width:4px
+    linkStyle 5 stroke:#e91e63,stroke-width:4px
+    linkStyle 6 stroke:#9c27b0,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#2196f3,stroke-width:4px
+    linkStyle 11 stroke:#2196f3,stroke-width:4px
+    linkStyle 12 stroke:#2196f3,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ff9800,stroke-width:4px
+    linkStyle 15 stroke:#ff9800,stroke-width:4px
+    linkStyle 16 stroke:#ff9800,stroke-width:4px
+    linkStyle 17 stroke:#ff9800,stroke-width:4px
+    linkStyle 18 stroke:#ff9800,stroke-width:4px
+    linkStyle 19 stroke:#ffc107,stroke-width:4px
+    linkStyle 20 stroke:#ffc107,stroke-width:4px
+    linkStyle 21 stroke:#ffc107,stroke-width:4px
+    linkStyle 22 stroke:#4caf50,stroke-width:4px
+    linkStyle 23 stroke:#4caf50,stroke-width:4px
+    linkStyle 24 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -176,6 +224,7 @@ graph LR
 ### **Multi-Provider AI Architecture**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph RequestLayer["📝 Request Layer"]
         USER_REQ["👤 User Request<br/>Analysis Needed"]
@@ -226,31 +275,31 @@ graph TB
         DEGRADED_MODE["⚠️ Degraded Mode<br/>Limited Functionality"]
     end
     
-    USER_REQ --> REQ_QUEUE
-    REQ_QUEUE --> LOAD_BALANCER
-    LOAD_BALANCER --> HEALTH_CHECK
+    USER_REQ -.->|"🔴"| REQ_QUEUE
+    REQ_QUEUE -.->|"🔴"| LOAD_BALANCER
+    LOAD_BALANCER -.->|"🔴"| HEALTH_CHECK
     
-    HEALTH_CHECK --> RATE_LIMITER
-    RATE_LIMITER --> CIRCUIT_BREAKER
-    CIRCUIT_BREAKER --> PROVIDER_SELECTOR
+    HEALTH_CHECK -.->|"🟣"| RATE_LIMITER
+    RATE_LIMITER -.->|"🟣"| CIRCUIT_BREAKER
+    CIRCUIT_BREAKER -.->|"🟣"| PROVIDER_SELECTOR
     
-    PROVIDER_SELECTOR --> GPT4
-    PROVIDER_SELECTOR --> CLAUDE3
-    PROVIDER_SELECTOR --> AZURE_GPT4
-    PROVIDER_SELECTOR --> LLAMA
+    PROVIDER_SELECTOR -.->|"🔵"| GPT4
+    PROVIDER_SELECTOR -.->|"🔵"| CLAUDE3
+    PROVIDER_SELECTOR -.->|"🔵"| AZURE_GPT4
+    PROVIDER_SELECTOR -.->|"🔵"| LLAMA
     
-    GPT4 --> RESPONSE_VALIDATOR
-    CLAUDE3 --> RESPONSE_VALIDATOR
-    AZURE_GPT4 --> RESPONSE_VALIDATOR
-    LLAMA --> RESPONSE_VALIDATOR
+    GPT4 -.->|"🟠"| RESPONSE_VALIDATOR
+    CLAUDE3 -.->|"🟠"| RESPONSE_VALIDATOR
+    AZURE_GPT4 -.->|"🟠"| RESPONSE_VALIDATOR
+    LLAMA -.->|"🟠"| RESPONSE_VALIDATOR
     
-    RESPONSE_VALIDATOR --> CONTENT_ENHANCER
-    CONTENT_ENHANCER --> FORMAT_CONVERTER
-    FORMAT_CONVERTER --> CACHE_MANAGER
+    RESPONSE_VALIDATOR -.->|"🟡"| CONTENT_ENHANCER
+    CONTENT_ENHANCER -.->|"🟡"| FORMAT_CONVERTER
+    FORMAT_CONVERTER -.->|"🟡"| CACHE_MANAGER
     
-    CIRCUIT_BREAKER --> RETRY_LOGIC
-    RETRY_LOGIC --> FALLBACK_ROUTER
-    FALLBACK_ROUTER --> DEGRADED_MODE
+    CIRCUIT_BREAKER -.->|"🟢"| RETRY_LOGIC
+    RETRY_LOGIC -.->|"🟢"| FALLBACK_ROUTER
+    FALLBACK_ROUTER -.->|"🟢"| DEGRADED_MODE
     
     classDef requestStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef managementStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -263,6 +312,27 @@ graph TB
     class AIProviders providerStyle
     class ResponseProcessing processingStyle
     class FallbackSystem fallbackStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#9c27b0,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#2196f3,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#ff9800,stroke-width:4px
+    linkStyle 11 stroke:#ff9800,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ffc107,stroke-width:4px
+    linkStyle 15 stroke:#ffc107,stroke-width:4px
+    linkStyle 16 stroke:#ffc107,stroke-width:4px
+    linkStyle 17 stroke:#4caf50,stroke-width:4px
+    linkStyle 18 stroke:#4caf50,stroke-width:4px
+    linkStyle 19 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -272,6 +342,7 @@ graph TB
 ### **Template-Based Generation System**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph AnalysisInput["📊 Analysis Input"]
         DOC_ANALYSIS["📄 Document Analysis<br/>Processed Content"]
@@ -322,35 +393,35 @@ graph TB
         DEPLOYMENT_CONFIG["🚀 Deployment Config<br/>Production Ready"]
     end
     
-    DOC_ANALYSIS --> TEMPLATE_MATCHER
-    ARCH_PATTERNS --> FRAMEWORK_DETECTOR
-    TECH_STACK --> TEMPLATE_REGISTRY
-    REQUIREMENTS --> CUSTOM_TEMPLATES
+    DOC_ANALYSIS -.->|"🔴"| TEMPLATE_MATCHER
+    ARCH_PATTERNS -.->|"🔴"| FRAMEWORK_DETECTOR
+    TECH_STACK -.->|"🔴"| TEMPLATE_REGISTRY
+    REQUIREMENTS -.->|"🔴"| CUSTOM_TEMPLATES
     
-    TEMPLATE_MATCHER --> JINJA_ENGINE
-    FRAMEWORK_DETECTOR --> CONTEXT_BUILDER
-    TEMPLATE_REGISTRY --> CONDITIONAL_LOGIC
-    CUSTOM_TEMPLATES --> LOOP_PROCESSOR
+    TEMPLATE_MATCHER -.->|"🟣"| JINJA_ENGINE
+    FRAMEWORK_DETECTOR -.->|"🟣"| CONTEXT_BUILDER
+    TEMPLATE_REGISTRY -.->|"🟣"| CONDITIONAL_LOGIC
+    CUSTOM_TEMPLATES -.->|"🟣"| LOOP_PROCESSOR
     
-    JINJA_ENGINE --> FILE_GENERATOR
-    CONTEXT_BUILDER --> CONFIG_GENERATOR
-    CONDITIONAL_LOGIC --> DEPENDENCY_RESOLVER
-    LOOP_PROCESSOR --> STRUCTURE_BUILDER
+    JINJA_ENGINE -.->|"🔵"| FILE_GENERATOR
+    CONTEXT_BUILDER -.->|"🔵"| CONFIG_GENERATOR
+    CONDITIONAL_LOGIC -.->|"🔵"| DEPENDENCY_RESOLVER
+    LOOP_PROCESSOR -.->|"🔵"| STRUCTURE_BUILDER
     
-    FILE_GENERATOR --> AI_CODE_GEN
-    CONFIG_GENERATOR --> CODE_OPTIMIZER
-    DEPENDENCY_RESOLVER --> BEST_PRACTICES
-    STRUCTURE_BUILDER --> DOCUMENTATION_GEN
+    FILE_GENERATOR -.->|"🟠"| AI_CODE_GEN
+    CONFIG_GENERATOR -.->|"🟠"| CODE_OPTIMIZER
+    DEPENDENCY_RESOLVER -.->|"🟠"| BEST_PRACTICES
+    STRUCTURE_BUILDER -.->|"🟠"| DOCUMENTATION_GEN
     
-    AI_CODE_GEN --> SYNTAX_VALIDATOR
-    CODE_OPTIMIZER --> LINTER
-    BEST_PRACTICES --> SECURITY_SCANNER
-    DOCUMENTATION_GEN --> BUILD_TESTER
+    AI_CODE_GEN -.->|"🟡"| SYNTAX_VALIDATOR
+    CODE_OPTIMIZER -.->|"🟡"| LINTER
+    BEST_PRACTICES -.->|"🟡"| SECURITY_SCANNER
+    DOCUMENTATION_GEN -.->|"🟡"| BUILD_TESTER
     
-    SYNTAX_VALIDATOR --> PROJECT_PACKAGER
-    LINTER --> METADATA_GENERATOR
-    SECURITY_SCANNER --> README_GENERATOR
-    BUILD_TESTER --> DEPLOYMENT_CONFIG
+    SYNTAX_VALIDATOR -.->|"🟢"| PROJECT_PACKAGER
+    LINTER -.->|"🟢"| METADATA_GENERATOR
+    SECURITY_SCANNER -.->|"🟢"| README_GENERATOR
+    BUILD_TESTER -.->|"🟢"| DEPLOYMENT_CONFIG
     
     classDef analysisStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef selectionStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -367,6 +438,31 @@ graph TB
     class AIEnhancement aiStyle
     class QualityAssurance qaStyle
     class OutputGeneration outputStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#e91e63,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#9c27b0,stroke-width:4px
+    linkStyle 7 stroke:#9c27b0,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#2196f3,stroke-width:4px
+    linkStyle 11 stroke:#2196f3,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ff9800,stroke-width:4px
+    linkStyle 15 stroke:#ff9800,stroke-width:4px
+    linkStyle 16 stroke:#ffc107,stroke-width:4px
+    linkStyle 17 stroke:#ffc107,stroke-width:4px
+    linkStyle 18 stroke:#ffc107,stroke-width:4px
+    linkStyle 19 stroke:#ffc107,stroke-width:4px
+    linkStyle 20 stroke:#4caf50,stroke-width:4px
+    linkStyle 21 stroke:#4caf50,stroke-width:4px
+    linkStyle 22 stroke:#4caf50,stroke-width:4px
+    linkStyle 23 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -376,6 +472,7 @@ graph TB
 ### **Redis-Based Caching System**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph ApplicationLayer["🚀 Application Layer"]
         CLI_APP["💻 CLI Application<br/>Command Interface"]
@@ -424,37 +521,37 @@ graph TB
         DASHBOARD["📋 Dashboard<br/>Visual Monitoring"]
     end
     
-    CLI_APP --> CACHE_MANAGER
-    API_SERVER --> CACHE_MANAGER
-    WEB_APP --> CACHE_MANAGER
-    BACKGROUND_JOBS --> CACHE_MANAGER
+    CLI_APP -.->|"🔴"| CACHE_MANAGER
+    API_SERVER -.->|"🔴"| CACHE_MANAGER
+    WEB_APP -.->|"🔴"| CACHE_MANAGER
+    BACKGROUND_JOBS -.->|"🔴"| CACHE_MANAGER
     
-    CACHE_MANAGER --> TTL_CONTROLLER
-    TTL_CONTROLLER --> EVICTION_POLICY
-    EVICTION_POLICY --> COMPRESSION_ENGINE
+    CACHE_MANAGER -.->|"🟣"| TTL_CONTROLLER
+    TTL_CONTROLLER -.->|"🟣"| EVICTION_POLICY
+    EVICTION_POLICY -.->|"🟣"| COMPRESSION_ENGINE
     
-    COMPRESSION_ENGINE --> REDIS_DOC
-    COMPRESSION_ENGINE --> REDIS_AI
-    COMPRESSION_ENGINE --> REDIS_ANALYSIS
-    COMPRESSION_ENGINE --> REDIS_TEMPLATES
-    COMPRESSION_ENGINE --> REDIS_BUILDS
-    COMPRESSION_ENGINE --> REDIS_CONFIG
-    COMPRESSION_ENGINE --> REDIS_SESSIONS
-    COMPRESSION_ENGINE --> REDIS_PROGRESS
-    COMPRESSION_ENGINE --> REDIS_LOCKS
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_DOC
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_AI
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_ANALYSIS
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_TEMPLATES
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_BUILDS
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_CONFIG
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_SESSIONS
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_PROGRESS
+    COMPRESSION_ENGINE -.->|"🔵"| REDIS_LOCKS
     
-    REDIS_DOC --> MEMORY_CACHE
-    REDIS_AI --> DISK_CACHE
-    REDIS_TEMPLATES --> DATABASE_CACHE
+    REDIS_DOC -.->|"🟠"| MEMORY_CACHE
+    REDIS_AI -.->|"🟠"| DISK_CACHE
+    REDIS_TEMPLATES -.->|"🟠"| DATABASE_CACHE
     
-    REDIS_DOC --> CACHE_MONITOR
-    REDIS_AI --> CACHE_MONITOR
-    REDIS_TEMPLATES --> CACHE_MONITOR
-    REDIS_SESSIONS --> CACHE_MONITOR
+    REDIS_DOC -.->|"🟡"| CACHE_MONITOR
+    REDIS_AI -.->|"🟡"| CACHE_MONITOR
+    REDIS_TEMPLATES -.->|"🟡"| CACHE_MONITOR
+    REDIS_SESSIONS -.->|"🟡"| CACHE_MONITOR
     
-    CACHE_MONITOR --> METRICS_COLLECTOR
-    METRICS_COLLECTOR --> ALERT_SYSTEM
-    ALERT_SYSTEM --> DASHBOARD
+    CACHE_MONITOR -.->|"🟢"| METRICS_COLLECTOR
+    METRICS_COLLECTOR -.->|"🟢"| ALERT_SYSTEM
+    ALERT_SYSTEM -.->|"🟢"| DASHBOARD
     
     classDef appStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef managementStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -467,6 +564,33 @@ graph TB
     class RedisCluster redisStyle
     class FallbackStorage fallbackStyle
     class MonitoringSystem monitorStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#e91e63,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#9c27b0,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#2196f3,stroke-width:4px
+    linkStyle 11 stroke:#2196f3,stroke-width:4px
+    linkStyle 12 stroke:#2196f3,stroke-width:4px
+    linkStyle 13 stroke:#2196f3,stroke-width:4px
+    linkStyle 14 stroke:#2196f3,stroke-width:4px
+    linkStyle 15 stroke:#2196f3,stroke-width:4px
+    linkStyle 16 stroke:#ff9800,stroke-width:4px
+    linkStyle 17 stroke:#ff9800,stroke-width:4px
+    linkStyle 18 stroke:#ff9800,stroke-width:4px
+    linkStyle 19 stroke:#ffc107,stroke-width:4px
+    linkStyle 20 stroke:#ffc107,stroke-width:4px
+    linkStyle 21 stroke:#ffc107,stroke-width:4px
+    linkStyle 22 stroke:#ffc107,stroke-width:4px
+    linkStyle 23 stroke:#4caf50,stroke-width:4px
+    linkStyle 24 stroke:#4caf50,stroke-width:4px
+    linkStyle 25 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -476,6 +600,7 @@ graph TB
 ### **Security Architecture Overview**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph ExternalAccess["🌐 External Access"]
         USERS["👥 Users<br/>CLI, API, Web"]
@@ -518,33 +643,33 @@ graph TB
         COMPLIANCE_CHECKER["✅ Compliance Checker<br/>Standards Verification"]
     end
     
-    USERS --> FIREWALL
-    EXTERNAL_APIS --> FIREWALL
-    MONITORING_TOOLS --> FIREWALL
+    USERS -.->|"🔴"| FIREWALL
+    EXTERNAL_APIS -.->|"🔴"| FIREWALL
+    MONITORING_TOOLS -.->|"🔴"| FIREWALL
     
-    FIREWALL --> RATE_LIMITER_SEC
-    RATE_LIMITER_SEC --> IP_WHITELIST
-    IP_WHITELIST --> SSL_TERMINATION
+    FIREWALL -.->|"🟣"| RATE_LIMITER_SEC
+    RATE_LIMITER_SEC -.->|"🟣"| IP_WHITELIST
+    IP_WHITELIST -.->|"🟣"| SSL_TERMINATION
     
-    SSL_TERMINATION --> AUTH_MANAGER
-    AUTH_MANAGER --> API_KEY_VALIDATOR
-    API_KEY_VALIDATOR --> JWT_PROCESSOR
-    JWT_PROCESSOR --> SESSION_MANAGER
+    SSL_TERMINATION -.->|"🔵"| AUTH_MANAGER
+    AUTH_MANAGER -.->|"🔵"| API_KEY_VALIDATOR
+    API_KEY_VALIDATOR -.->|"🔵"| JWT_PROCESSOR
+    JWT_PROCESSOR -.->|"🔵"| SESSION_MANAGER
     
-    SESSION_MANAGER --> RBAC
-    RBAC --> PERMISSION_ENGINE
-    PERMISSION_ENGINE --> RESOURCE_GUARD
-    RESOURCE_GUARD --> AUDIT_LOGGER
+    SESSION_MANAGER -.->|"🟠"| RBAC
+    RBAC -.->|"🟠"| PERMISSION_ENGINE
+    PERMISSION_ENGINE -.->|"🟠"| RESOURCE_GUARD
+    RESOURCE_GUARD -.->|"🟠"| AUDIT_LOGGER
     
-    AUDIT_LOGGER --> ENCRYPTION_ENGINE
-    ENCRYPTION_ENGINE --> KEY_MANAGER
-    KEY_MANAGER --> DATA_SANITIZER
-    DATA_SANITIZER --> SECURE_STORAGE
+    AUDIT_LOGGER -.->|"🟡"| ENCRYPTION_ENGINE
+    ENCRYPTION_ENGINE -.->|"🟡"| KEY_MANAGER
+    KEY_MANAGER -.->|"🟡"| DATA_SANITIZER
+    DATA_SANITIZER -.->|"🟡"| SECURE_STORAGE
     
-    SECURE_STORAGE --> INTRUSION_DETECTION
-    INTRUSION_DETECTION --> VULNERABILITY_SCANNER
-    VULNERABILITY_SCANNER --> SECURITY_ALERTS
-    SECURITY_ALERTS --> COMPLIANCE_CHECKER
+    SECURE_STORAGE -.->|"🟢"| INTRUSION_DETECTION
+    INTRUSION_DETECTION -.->|"🟢"| VULNERABILITY_SCANNER
+    VULNERABILITY_SCANNER -.->|"🟢"| SECURITY_ALERTS
+    SECURITY_ALERTS -.->|"🟢"| COMPLIANCE_CHECKER
     
     classDef externalStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef gatewayStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -559,6 +684,29 @@ graph TB
     class AuthorizationLayer authzStyle
     class DataProtection protectionStyle
     class SecurityMonitoring monitoringStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#9c27b0,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#2196f3,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#ff9800,stroke-width:4px
+    linkStyle 11 stroke:#ff9800,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ffc107,stroke-width:4px
+    linkStyle 15 stroke:#ffc107,stroke-width:4px
+    linkStyle 16 stroke:#ffc107,stroke-width:4px
+    linkStyle 17 stroke:#ffc107,stroke-width:4px
+    linkStyle 18 stroke:#4caf50,stroke-width:4px
+    linkStyle 19 stroke:#4caf50,stroke-width:4px
+    linkStyle 20 stroke:#4caf50,stroke-width:4px
+    linkStyle 21 stroke:#4caf50,stroke-width:4px
 ```
 
 ---
@@ -568,6 +716,7 @@ graph TB
 ### **Comprehensive Monitoring Architecture**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph TB
     subgraph ApplicationMetrics["📊 Application Metrics"]
         PERF_METRICS["⚡ Performance Metrics<br/>Response Times"]
@@ -611,30 +760,30 @@ graph TB
         MOBILE_INTERFACE["📱 Mobile Interface<br/>Mobile Monitoring"]
     end
     
-    PERF_METRICS --> METRICS_COLLECTOR_MON
-    BUSINESS_METRICS --> LOG_AGGREGATOR
-    ERROR_METRICS --> TRACE_COLLECTOR
-    RESOURCE_METRICS --> EVENT_PROCESSOR
+    PERF_METRICS -.->|"🔴"| METRICS_COLLECTOR_MON
+    BUSINESS_METRICS -.->|"🔴"| LOG_AGGREGATOR
+    ERROR_METRICS -.->|"🔴"| TRACE_COLLECTOR
+    RESOURCE_METRICS -.->|"🔴"| EVENT_PROCESSOR
     
-    METRICS_COLLECTOR_MON --> TIME_SERIES_DB
-    LOG_AGGREGATOR --> LOG_STORAGE
-    TRACE_COLLECTOR --> TRACE_STORAGE
-    EVENT_PROCESSOR --> ALERT_STORAGE
+    METRICS_COLLECTOR_MON -.->|"🟣"| TIME_SERIES_DB
+    LOG_AGGREGATOR -.->|"🟣"| LOG_STORAGE
+    TRACE_COLLECTOR -.->|"🟣"| TRACE_STORAGE
+    EVENT_PROCESSOR -.->|"🟣"| ALERT_STORAGE
     
-    TIME_SERIES_DB --> ANOMALY_DETECTOR
-    LOG_STORAGE --> TREND_ANALYZER
-    TRACE_STORAGE --> CORRELATION_ENGINE
-    ALERT_STORAGE --> PREDICTIVE_ANALYTICS
+    TIME_SERIES_DB -.->|"🔵"| ANOMALY_DETECTOR
+    LOG_STORAGE -.->|"🔵"| TREND_ANALYZER
+    TRACE_STORAGE -.->|"🔵"| CORRELATION_ENGINE
+    ALERT_STORAGE -.->|"🔵"| PREDICTIVE_ANALYTICS
     
-    ANOMALY_DETECTOR --> ALERT_MANAGER
-    TREND_ANALYZER --> NOTIFICATION_ENGINE
-    CORRELATION_ENGINE --> ESCALATION_MANAGER
-    PREDICTIVE_ANALYTICS --> INCIDENT_MANAGER
+    ANOMALY_DETECTOR -.->|"🟠"| ALERT_MANAGER
+    TREND_ANALYZER -.->|"🟠"| NOTIFICATION_ENGINE
+    CORRELATION_ENGINE -.->|"🟠"| ESCALATION_MANAGER
+    PREDICTIVE_ANALYTICS -.->|"🟠"| INCIDENT_MANAGER
     
-    ALERT_MANAGER --> DASHBOARD_ENGINE
-    NOTIFICATION_ENGINE --> REPORT_GENERATOR
-    ESCALATION_MANAGER --> REAL_TIME_MONITOR
-    INCIDENT_MANAGER --> MOBILE_INTERFACE
+    ALERT_MANAGER -.->|"🟡"| DASHBOARD_ENGINE
+    NOTIFICATION_ENGINE -.->|"🟡"| REPORT_GENERATOR
+    ESCALATION_MANAGER -.->|"🟡"| REAL_TIME_MONITOR
+    INCIDENT_MANAGER -.->|"🟡"| MOBILE_INTERFACE
     
     classDef metricsStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef collectionStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -649,6 +798,27 @@ graph TB
     class AnalysisEngine analysisStyle
     class AlertingSystem alertStyle
     class Visualization visualStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#e91e63,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#9c27b0,stroke-width:4px
+    linkStyle 7 stroke:#9c27b0,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#2196f3,stroke-width:4px
+    linkStyle 11 stroke:#2196f3,stroke-width:4px
+    linkStyle 12 stroke:#ff9800,stroke-width:4px
+    linkStyle 13 stroke:#ff9800,stroke-width:4px
+    linkStyle 14 stroke:#ff9800,stroke-width:4px
+    linkStyle 15 stroke:#ff9800,stroke-width:4px
+    linkStyle 16 stroke:#ffc107,stroke-width:4px
+    linkStyle 17 stroke:#ffc107,stroke-width:4px
+    linkStyle 18 stroke:#ffc107,stroke-width:4px
+    linkStyle 19 stroke:#ffc107,stroke-width:4px
 ```
 
 ---
@@ -658,6 +828,7 @@ graph TB
 ### **Request-Response Flow**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 sequenceDiagram
     participant User as 👤 User
     participant CLI as 💻 CLI
@@ -729,6 +900,7 @@ sequenceDiagram
 ### **Configuration Dependencies**
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#e1f5fe', 'primaryTextColor':'#000', 'primaryBorderColor':'#01579b', 'lineColor':'#ff0066', 'arrowheadColor':'#ff0066', 'edgeLabelBackground':'#ffffff', 'tertiaryColor':'#fff'}}}%%
 graph LR
     subgraph ConfigSources["⚙️ Configuration Sources"]
         ENV_VARS["🌍 Environment Variables<br/>Runtime Config"]
@@ -751,19 +923,19 @@ graph LR
         MONITORING_CONFIG["📊 Monitoring Configuration<br/>Metrics Settings"]
     end
     
-    ENV_VARS --> CONFIG_LOADER
-    CONFIG_FILES --> CONFIG_LOADER
-    CLI_ARGS --> CONFIG_LOADER
-    DEFAULTS --> CONFIG_LOADER
+    ENV_VARS -.->|"🔴"| CONFIG_LOADER
+    CONFIG_FILES -.->|"🔴"| CONFIG_LOADER
+    CLI_ARGS -.->|"🔴"| CONFIG_LOADER
+    DEFAULTS -.->|"🔴"| CONFIG_LOADER
     
-    CONFIG_LOADER --> CONFIG_VALIDATOR
-    CONFIG_VALIDATOR --> CONFIG_MERGER
-    CONFIG_MERGER --> CONFIG_WATCHER
+    CONFIG_LOADER -.->|"🟣"| CONFIG_VALIDATOR
+    CONFIG_VALIDATOR -.->|"🟣"| CONFIG_MERGER
+    CONFIG_MERGER -.->|"🟣"| CONFIG_WATCHER
     
-    CONFIG_WATCHER --> AI_CONFIG
-    CONFIG_WATCHER --> CACHE_CONFIG
-    CONFIG_WATCHER --> SECURITY_CONFIG
-    CONFIG_WATCHER --> MONITORING_CONFIG
+    CONFIG_WATCHER -.->|"🔵"| AI_CONFIG
+    CONFIG_WATCHER -.->|"🔵"| CACHE_CONFIG
+    CONFIG_WATCHER -.->|"🔵"| SECURITY_CONFIG
+    CONFIG_WATCHER -.->|"🔵"| MONITORING_CONFIG
     
     classDef sourceStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#000
     classDef managerStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
@@ -772,6 +944,18 @@ graph LR
     class ConfigSources sourceStyle
     class ConfigManager managerStyle
     class ComponentConfig componentStyle
+    
+    linkStyle 0 stroke:#e91e63,stroke-width:4px
+    linkStyle 1 stroke:#e91e63,stroke-width:4px
+    linkStyle 2 stroke:#e91e63,stroke-width:4px
+    linkStyle 3 stroke:#e91e63,stroke-width:4px
+    linkStyle 4 stroke:#9c27b0,stroke-width:4px
+    linkStyle 5 stroke:#9c27b0,stroke-width:4px
+    linkStyle 6 stroke:#9c27b0,stroke-width:4px
+    linkStyle 7 stroke:#2196f3,stroke-width:4px
+    linkStyle 8 stroke:#2196f3,stroke-width:4px
+    linkStyle 9 stroke:#2196f3,stroke-width:4px
+    linkStyle 10 stroke:#2196f3,stroke-width:4px
 ```
 
 ---
